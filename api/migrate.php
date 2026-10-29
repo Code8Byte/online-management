@@ -1,0 +1,1 @@
+<?php require_once "config.php"; try { $pdo->exec("ALTER TABLE lkh ADD COLUMN 5s_menit INT DEFAULT 0 AFTER setting_menit"); echo "Added 5s_menit\n"; } catch(Exception $e) { echo $e->getMessage(); } ?>
