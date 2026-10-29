@@ -27,6 +27,9 @@
           <router-link v-if="authState.role === 'admin'" to="/master" class="nav-link">
             <span>⚙️</span> Master Data
           </router-link>
+          <router-link v-if="authState.role === 'admin'" to="/users" class="nav-link">
+            <span>👥</span> Account Management
+          </router-link>
           <router-link v-if="authState.role === 'admin'" to="/logs" class="nav-link">
             <span>📜</span> Log Aktivitas
           </router-link>
@@ -59,7 +62,10 @@
         </div>
       </router-link>
       <div class="d-flex align-center gap-05">
-        <router-link v-if="authState.role === 'admin'" to="/logs" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Log Aktivitas Admin">
+        <router-link v-if="authState.role === 'admin'" to="/users" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Account Management">
+          👥 Akun
+        </router-link>
+        <router-link v-if="authState.role === 'admin'" to="/logs" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Log Aktivitas Admin">
           📜 Log
         </router-link>
         <router-link to="/profile" class="user-badge" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Profil & Ganti Password">

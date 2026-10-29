@@ -1,159 +1,112 @@
 <template>
-  <div class="dashboard-operator-view op-wrap">
+  <div class="op-wrap">
 
-    <!-- 1. Salam di Tengah -->
+    <!-- 1. Salam -->
     <section class="op-hero">
-      <div class="op-date-badge">📅 {{ todayFormatted }}</div>
+      <div class="op-date-badge">{{ todayFormatted }}</div>
       <h1 class="op-greeting">
-        {{ greeting }}, <span class="op-user-name">{{ displayName }}</span>!
+        {{ greeting }}, <span class="op-user-name">{{ displayName }}</span>
       </h1>
-      <p class="op-greeting-sub">
-        Ringkasan pencapaian OEE pribadi &amp; shortcut operasional Anda di Divisi Sortir.
-      </p>
     </section>
 
-    <!-- 2. Empat Tombol Aksi Disusun Horizontal -->
+    <!-- 2. Tombol aksi -->
     <section class="op-actions-row">
-      <!-- 1. Cost Control -->
-      <div class="op-btn-card op-card-cc" @click="openModalCC" role="button" tabindex="0">
-        <div class="op-btn-icon">📑</div>
-        <div class="op-btn-text">
+      <button type="button" class="op-act act-cc" @click="openModalCC">
+        <span class="op-act-icon">CC</span>
+        <span class="op-act-text">
           <b>Cost Control</b>
-          <small>Export Laporan CC</small>
-        </div>
-      </div>
+          <small>Export laporan CC</small>
+        </span>
+      </button>
 
-      <!-- 2. LKH Produksi -->
-      <div class="op-btn-card op-card-lkh" @click="openModalLkhOperator" role="button" tabindex="0">
-        <div class="op-btn-icon">📗</div>
-        <div class="op-btn-text">
+      <button type="button" class="op-act act-lkh" @click="openModalLkhOperator">
+        <span class="op-act-icon">XL</span>
+        <span class="op-act-text">
           <b>LKH Produksi</b>
           <small>Export Excel LKH</small>
-        </div>
-      </div>
+        </span>
+      </button>
 
-      <!-- 3. STB (Segera Hadir) -->
-      <div class="op-btn-card op-card-disabled" @click="openBlankMenu('STB')" role="button" tabindex="0">
-        <div class="op-btn-icon">📦</div>
-        <div class="op-btn-text">
-          <div class="d-flex align-center gap-03">
-            <b>STB</b>
-            <span class="op-tag-badge">Segera Hadir</span>
-          </div>
+      <button type="button" class="op-act act-soon" @click="openBlankMenu('STB')">
+        <span class="op-act-icon">ST</span>
+        <span class="op-act-text">
+          <b>STB <i class="op-soon">Segera hadir</i></b>
           <small>Distribusi STB</small>
-        </div>
-      </div>
+        </span>
+      </button>
 
-      <!-- 4. Kiriman (Segera Hadir) -->
-      <div class="op-btn-card op-card-disabled" @click="openBlankMenu('Kiriman')" role="button" tabindex="0">
-        <div class="op-btn-icon">🚚</div>
-        <div class="op-btn-text">
-          <div class="d-flex align-center gap-03">
-            <b>Kiriman</b>
-            <span class="op-tag-badge">Segera Hadir</span>
-          </div>
-          <small>Status Pengiriman</small>
-        </div>
-      </div>
+      <button type="button" class="op-act act-soon" @click="openBlankMenu('Kiriman')">
+        <span class="op-act-icon">KR</span>
+        <span class="op-act-text">
+          <b>Kiriman <i class="op-soon">Segera hadir</i></b>
+          <small>Status pengiriman</small>
+        </span>
+      </button>
     </section>
 
-    <!-- 3. Ringkasan Metrik OEE (1 Bulan & 1 Minggu) -->
-    <section class="op-kpi-grid">
-      <!-- Card OEE 1 Bulan -->
-      <div class="op-kpi-box highlight">
-        <div class="op-kpi-top">
-          <span class="op-eyebrow">Pencapaian OEE 1 Bulan</span>
-          <span class="op-pill" :class="'tone-' + oeeMonthTone">{{ oeeMonthStatus }}</span>
+    <!-- 3. OEE bulan ini -->
+    <section class="op-hero-oee">
+      <div class="op-oee">
+        <div class="op-oee-top">
+          <span class="op-eyebrow">OEE {{ monthLabel }}</span>
+          <span class="op-pill" :class="'tone-' + oeeTone">{{ oeeStatus }}</span>
         </div>
-        <div class="op-kpi-main">
-          <div class="op-kpi-val" :class="'txt-' + oeeMonthTone">
-            {{ oeeMonth.toFixed(1) }}<small>%</small>
-          </div>
-          <div class="op-kpi-sub">
-            Target: <b>85%</b> &middot; Selisih <b :class="oeeMonth >= 85 ? 'txt-ok' : 'txt-bad'">{{ (oeeMonth - 85) >= 0 ? '+' : '' }}{{ (oeeMonth - 85).toFixed(1) }}%</b>
-          </div>
+        <div class="op-oee-value" :class="'txt-' + oeeTone">{{ oeeVal.toFixed(1) }}<small>%</small></div>
+        <div class="op-track op-track-lg">
+          <div class="op-fill" :class="'bg-' + oeeTone" :style="{ width: Math.min(100, oeeVal) + '%' }"></div>
+          <div class="op-target-mark" style="left: 85%"><span>85%</span></div>
         </div>
-        <div class="op-kpi-pillars">
-          <div>
-            <span>Availability</span>
-            <b :class="'txt-' + rateTone(dataMonth.kpi?.availability, 90)">{{ (Number(dataMonth.kpi?.availability) || 0).toFixed(1) }}%</b>
-            <small>Target 90%</small>
-          </div>
-          <div>
-            <span>Performance</span>
-            <b :class="'txt-' + rateTone(dataMonth.kpi?.performance, 95)">{{ (Number(dataMonth.kpi?.performance) || 0).toFixed(1) }}%</b>
-            <small>Target 95%</small>
-          </div>
-          <div>
-            <span>Quality OEE</span>
-            <b :class="'txt-' + rateTone(dataMonth.kpi?.quality_oee, 99)">{{ (Number(dataMonth.kpi?.quality_oee) || 0).toFixed(1) }}%</b>
-            <small>Target 99%</small>
-          </div>
+        <div class="op-oee-foot">
+          <span v-if="oeeGap >= 0">Di atas target <b class="txt-ok">+{{ oeeGap.toFixed(1) }} poin</b></span>
+          <span v-else>Di bawah target <b class="txt-bad">{{ oeeGap.toFixed(1) }} poin</b></span>
+          <span class="op-muted">Target 85%</span>
         </div>
       </div>
 
-      <!-- Card OEE 1 Minggu -->
-      <div class="op-kpi-box">
-        <div class="op-kpi-top">
-          <span class="op-eyebrow">Pencapaian OEE 1 Minggu (7 Hari)</span>
-          <span class="op-pill" :class="'tone-' + oeeWeekTone">{{ oeeWeekStatus }}</span>
-        </div>
-        <div class="op-kpi-main">
-          <div class="op-kpi-val" :class="'txt-' + oeeWeekTone">
-            {{ oeeWeek.toFixed(1) }}<small>%</small>
+      <div class="op-pillars">
+        <div v-for="p in pillars" :key="p.key" class="op-pillar">
+          <div class="op-pillar-head">
+            <span class="op-eyebrow">{{ p.label }}</span>
+            <span class="op-pillar-val" :class="'txt-' + p.tone">{{ p.value.toFixed(1) }}%</span>
           </div>
-          <div class="op-kpi-sub">
-            Target: <b>85%</b> &middot; Selisih <b :class="oeeWeek >= 85 ? 'txt-ok' : 'txt-bad'">{{ (oeeWeek - 85) >= 0 ? '+' : '' }}{{ (oeeWeek - 85).toFixed(1) }}%</b>
+          <div class="op-track">
+            <div class="op-fill" :class="'bg-' + p.tone" :style="{ width: Math.min(100, p.value) + '%' }"></div>
+            <div class="op-target-mark" :style="{ left: p.target + '%' }"></div>
           </div>
-        </div>
-        <div class="op-kpi-pillars">
-          <div>
-            <span>Total Proses</span>
-            <b>{{ formatNumber(dataWeek.kpi?.total_proses) }}</b>
-            <small>lembar</small>
-          </div>
-          <div>
-            <span>Produk Baik</span>
-            <b class="txt-ok">{{ formatNumber(dataWeek.kpi?.good) }}</b>
-            <small>lembar</small>
-          </div>
-          <div>
-            <span>Reject Total</span>
-            <b class="txt-bad">{{ (Number(dataWeek.kpi?.ng_percent) || 0).toFixed(2) }}%</b>
-            <small>{{ formatNumber(totalRejectWeek) }} pcs</small>
+          <div class="op-pillar-foot">
+            <span class="op-muted">Target {{ p.target }}%</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 4. Grafik Tren OEE (Khusus Akun Operator Ini) -->
-    <section class="op-chart-card">
-      <div class="op-chart-head">
+    <!-- Ringkasan volume bulan ini -->
+    <section class="op-stats">
+      <div class="op-stat">
+        <span class="op-eyebrow">Total proses</span>
+        <b>{{ formatNumber(dataMonth.kpi?.total_proses) }}</b><small>lembar</small>
+      </div>
+      <div class="op-stat">
+        <span class="op-eyebrow">Produk baik</span>
+        <b class="txt-ok">{{ formatNumber(dataMonth.kpi?.good) }}</b><small>lembar</small>
+      </div>
+      <div class="op-stat">
+        <span class="op-eyebrow">Reject total</span>
+        <b class="txt-bad">{{ (Number(dataMonth.kpi?.ng_percent) || 0).toFixed(2) }}%</b>
+        <small>{{ formatNumber(totalRejectMonth) }} pcs</small>
+      </div>
+    </section>
+
+    <!-- 4. Grafik OEE bulan ini -->
+    <section class="op-card">
+      <div class="op-card-head">
         <div>
-          <h3>Grafik Tren OEE {{ rangeMode === 'week' ? '1 Minggu (7 Hari)' : '1 Bulan (30 Hari)' }}</h3>
-          <p>Data performa harian khusus akun <b>{{ displayName }}</b> vs Garis Target Standar 85%</p>
+          <h3>Tren OEE {{ monthLabel }}</h3>
+          <p>Capaian harian dibanding target 85%</p>
         </div>
         <div class="op-toggles">
-          <button
-            type="button"
-            class="op-toggle-btn"
-            :class="{ on: trendShow.availability }"
-            @click="toggleTrend('availability')"
-          >
-            Availability (90%)
-          </button>
-          <button
-            type="button"
-            class="op-toggle-btn"
-            :class="{ on: trendShow.performance }"
-            @click="toggleTrend('performance')"
-          >
-            Performance (95%)
-          </button>
-          <div class="op-seg">
-            <button type="button" :class="{ on: rangeMode === 'week' }" @click="setRangeMode('week')">1 Minggu</button>
-            <button type="button" :class="{ on: rangeMode === 'month' }" @click="setRangeMode('month')">1 Bulan</button>
-          </div>
+          <button type="button" :class="{ on: trendShow.availability }" @click="toggleTrend('availability')">Availability</button>
+          <button type="button" :class="{ on: trendShow.performance }" @click="toggleTrend('performance')">Performance</button>
         </div>
       </div>
 
@@ -161,97 +114,83 @@
         <canvas id="operatorOeeChartRef"></canvas>
         <div v-if="loading" class="op-empty">Memuat data grafik OEE...</div>
         <div v-else-if="!currentTimeline.length" class="op-empty">
-          Belum ada catatan LKH untuk akun {{ displayName }} pada periode {{ rangeMode === 'week' ? '7 hari' : '30 hari' }} ini.
+          Belum ada catatan LKH atas nama {{ displayName }} pada {{ monthLabel }}.
         </div>
       </div>
 
-      <div class="op-chart-foot">
-        <div class="op-legend-info">
-          <span class="legend-dot dot-oee"></span> OEE Aktual
-          <span class="legend-dot dot-target"></span> Garis Target OEE 85%
-          <span v-if="trendShow.availability" class="legend-dot dot-avail"></span> <template v-if="trendShow.availability">Availability</template>
-          <span v-if="trendShow.performance" class="legend-dot dot-perf"></span> <template v-if="trendShow.performance">Performance</template>
+      <div class="op-card-foot">
+        <div class="op-legend">
+          <span><i class="dot dot-oee"></i>OEE aktual</span>
+          <span><i class="dot dot-target"></i>Target 85%</span>
+          <span v-if="trendShow.availability"><i class="dot dot-avail"></i>Availability</span>
+          <span v-if="trendShow.performance"><i class="dot dot-perf"></i>Performance</span>
         </div>
-        <span v-if="currentTimeline.length" class="op-muted">
-          {{ currentTimeline.length }} hari kerja tercatat
-        </span>
+        <span v-if="currentTimeline.length" class="op-muted">{{ currentTimeline.length }} hari kerja tercatat</span>
       </div>
     </section>
 
     <!-- Modal Export Cost Control (CC) -->
-    <div v-if="showModalCC" class="modal-overlay" @click.self="showModalCC = false">
-      <div class="modal-content" style="max-width: 480px;">
-        <div class="d-flex justify-between align-center mb-1">
-          <h3 style="margin: 0; font-size: 1.15rem;">📑 Export Cost Control (CC)</h3>
-          <button type="button" class="btn btn-sm btn-secondary" @click="showModalCC = false" style="padding: 0.2rem 0.5rem;">✕</button>
+    <div v-if="showModalCC" class="modal-overlay" :class="{ 'bottom-sheet-active': isMobileScreen }" @click.self="showModalCC = false">
+      <div class="modal-content op-modal">
+        <div class="op-modal-head">
+          <h3>Export Cost Control (CC)</h3>
+          <button type="button" class="op-btn op-btn-ghost op-btn-sm" @click="showModalCC = false">✕</button>
         </div>
 
         <form @submit.prevent="submitExportCC('xlsx')">
-          <div class="form-group mb-1">
-            <label>Tanggal <span class="text-danger">*</span></label>
-            <input type="date" v-model="formCC.tanggal" class="form-control" required />
+          <div class="op-form-grid">
+            <div class="op-field">
+              <label>Tanggal *</label>
+              <input type="date" v-model="formCC.tanggal" class="op-input" required />
+            </div>
+            <div class="op-field">
+              <label>Shift *</label>
+              <select v-model="formCC.shift" class="op-input" required>
+                <option value="1">Shift 1</option>
+                <option value="2">Shift 2</option>
+                <option value="3">Shift 3</option>
+              </select>
+            </div>
           </div>
 
-          <div class="form-group mb-1">
-            <label>Pilihan Shift <span class="text-danger">*</span></label>
-            <select v-model="formCC.shift" class="form-control" required>
-              <option value="1">Shift 1</option>
-              <option value="2">Shift 2</option>
-              <option value="3">Shift 3</option>
-            </select>
-          </div>
-
-          <div class="d-flex justify-between align-center gap-05 mt-1" style="border-top: 1px solid var(--border-light); padding-top: 1rem;">
-            <button type="button" class="btn btn-secondary" @click="showModalCC = false">
-              Batal
-            </button>
-            <div class="d-flex gap-05">
-              <button type="button" class="btn btn-secondary" @click="submitExportCC('html')" title="Tampilan cetak / simpan langsung ke PDF">
-                🖨️ Cetak / PDF
-              </button>
-              <button type="submit" class="btn btn-primary">
-                📥 Download Excel
-              </button>
+          <div class="op-modal-actions">
+            <button type="button" class="op-btn op-btn-ghost" @click="showModalCC = false">Batal</button>
+            <div class="op-row-gap">
+              <button type="button" class="op-btn op-btn-ghost" @click="submitExportCC('html')" title="Tampilan cetak / simpan ke PDF">Cetak / PDF</button>
+              <button type="submit" class="op-btn op-btn-primary">Download Excel</button>
             </div>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Modal Export LKH Produksi (Khusus Operator: Hanya Tanggal & Shift) -->
-    <div v-if="showModalLkhOperator" class="modal-overlay" @click.self="showModalLkhOperator = false">
-      <div class="modal-content" style="max-width: 480px;">
-        <div class="d-flex justify-between align-center mb-1">
-          <h3 style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 6px;">
-            <span>📗</span> Export LKH Produksi
-          </h3>
-          <button type="button" class="btn btn-sm btn-secondary" @click="showModalLkhOperator = false" style="padding: 0.2rem 0.5rem;">✕</button>
+    <!-- Modal Export LKH Produksi -->
+    <div v-if="showModalLkhOperator" class="modal-overlay" :class="{ 'bottom-sheet-active': isMobileScreen }" @click.self="showModalLkhOperator = false">
+      <div class="modal-content op-modal">
+        <div class="op-modal-head">
+          <h3>Export LKH Produksi</h3>
+          <button type="button" class="op-btn op-btn-ghost op-btn-sm" @click="showModalLkhOperator = false">✕</button>
         </div>
 
         <form @submit.prevent="submitExportLkhOperator('xlsx')">
-          <div class="form-group mb-1">
-            <label>Tanggal <span class="text-danger">*</span></label>
-            <input type="date" v-model="formLkhOperator.tanggal" class="form-control" required />
-          </div>
-
-          <div class="form-group mb-1">
-            <label>Pilihan Shift <span class="text-danger">*</span></label>
-            <select v-model="formLkhOperator.shift" class="form-control" required>
-              <option value="1">Shift 1</option>
-              <option value="2">Shift 2</option>
-              <option value="3">Shift 3</option>
-            </select>
-          </div>
-
-          <div class="d-flex justify-between align-center gap-05 mt-1" style="border-top: 1px solid var(--border-light); padding-top: 1rem;">
-            <button type="button" class="btn btn-secondary" @click="showModalLkhOperator = false">
-              Batal
-            </button>
-            <div class="d-flex gap-05">
-              <button type="submit" class="btn btn-success">
-                <span>📥</span> Download Excel (.xlsx)
-              </button>
+          <div class="op-form-grid">
+            <div class="op-field">
+              <label>Tanggal *</label>
+              <input type="date" v-model="formLkhOperator.tanggal" class="op-input" required />
             </div>
+            <div class="op-field">
+              <label>Shift *</label>
+              <select v-model="formLkhOperator.shift" class="op-input" required>
+                <option value="1">Shift 1</option>
+                <option value="2">Shift 2</option>
+                <option value="3">Shift 3</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="op-modal-actions">
+            <button type="button" class="op-btn op-btn-ghost" @click="showModalLkhOperator = false">Batal</button>
+            <button type="submit" class="op-btn op-btn-primary">Download Excel (.xlsx)</button>
           </div>
         </form>
       </div>
@@ -267,13 +206,14 @@ import { apiFetch, authState } from '../../utils/api'
 
 const OEE_TARGET = 85
 const loading = ref(false)
-const rangeMode = ref('week') // 'week' | 'month'
 const trendShow = reactive({ availability: false, performance: false })
 
-const dataWeek = ref({ kpi: {}, trend_timeline: [] })
 const dataMonth = ref({ kpi: {}, trend_timeline: [] })
 
 let chartInstance = null
+
+const isMobileScreen = ref(false)
+const checkMobileScreen = () => { isMobileScreen.value = window.innerWidth <= 768 }
 
 const displayName = computed(() => authState.value?.username || 'Operator')
 
@@ -294,6 +234,10 @@ const todayFormatted = computed(() => {
   })
 })
 
+const monthLabel = computed(() => {
+  return new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+})
+
 const rateTone = (val, target) => {
   const n = Number(val) || 0
   if (n >= target) return 'ok'
@@ -301,19 +245,26 @@ const rateTone = (val, target) => {
   return 'bad'
 }
 
-const oeeMonth = computed(() => Number(dataMonth.value.kpi?.oee) || 0)
-const oeeMonthTone = computed(() => rateTone(oeeMonth.value, 85))
-const oeeMonthStatus = computed(() => (oeeMonth.value >= 85 ? 'Optimal' : oeeMonth.value >= 70 ? 'Waspada' : 'Kritis'))
+const oeeVal = computed(() => Number(dataMonth.value.kpi?.oee) || 0)
+const oeeTone = computed(() => (oeeVal.value >= 85 ? 'ok' : oeeVal.value >= 70 ? 'warn' : 'bad'))
+const oeeStatus = computed(() => (oeeVal.value >= 85 ? 'Optimal' : oeeVal.value >= 70 ? 'Waspada' : 'Kritis'))
+const oeeGap = computed(() => oeeVal.value - OEE_TARGET)
 
-const oeeWeek = computed(() => Number(dataWeek.value.kpi?.oee) || 0)
-const oeeWeekTone = computed(() => rateTone(oeeWeek.value, 85))
-const oeeWeekStatus = computed(() => (oeeWeek.value >= 85 ? 'Optimal' : oeeWeek.value >= 70 ? 'Waspada' : 'Kritis'))
-
-const totalRejectWeek = computed(() => (Number(dataWeek.value.kpi?.reject) || 0) + (Number(dataWeek.value.kpi?.setup_reject) || 0))
-
-const currentTimeline = computed(() => {
-  return rangeMode.value === 'week' ? (dataWeek.value.trend_timeline || []) : (dataMonth.value.trend_timeline || [])
+const pillars = computed(() => {
+  const k = dataMonth.value.kpi || {}
+  const a = Number(k.availability) || 0
+  const p = Number(k.performance) || 0
+  const q = Number(k.quality_oee) || 0
+  return [
+    { key: 'a', label: 'Availability', value: a, target: 90, tone: rateTone(a, 90) },
+    { key: 'p', label: 'Performance', value: p, target: 95, tone: rateTone(p, 95) },
+    { key: 'q', label: 'Quality', value: q, target: 99, tone: rateTone(q, 99) }
+  ]
 })
+
+const totalRejectMonth = computed(() => (Number(dataMonth.value.kpi?.reject) || 0) + (Number(dataMonth.value.kpi?.setup_reject) || 0))
+
+const currentTimeline = computed(() => dataMonth.value.trend_timeline || [])
 
 const formatNumber = (val) => {
   if (val === undefined || val === null || isNaN(val)) return '0'
@@ -326,11 +277,6 @@ const toLocalDate = (d) => {
 }
 
 const getLocalDate = () => toLocalDate(new Date())
-
-const setRangeMode = (mode) => {
-  rangeMode.value = mode
-  renderChart()
-}
 
 const toggleTrend = (key) => {
   trendShow[key] = !trendShow[key]
@@ -355,11 +301,11 @@ const renderChart = () => {
       label: 'OEE Aktual',
       data: tl.map(t => t.oee),
       borderColor: '#4f46e5',
-      backgroundColor: 'rgba(79, 70, 229, 0.12)',
+      backgroundColor: 'rgba(79, 70, 229, 0.10)',
       fill: true,
       tension: 0.3,
       borderWidth: 2.5,
-      pointRadius: tl.length > 20 ? 1 : 4,
+      pointRadius: tl.length > 20 ? 1 : 3,
       pointBackgroundColor: '#4f46e5',
       pointBorderColor: '#fff',
       pointBorderWidth: 2
@@ -368,7 +314,7 @@ const renderChart = () => {
       label: 'Target OEE 85%',
       data: tl.map(() => OEE_TARGET),
       borderColor: '#e11d48',
-      borderWidth: 2,
+      borderWidth: 1.5,
       borderDash: [6, 4],
       pointRadius: 0,
       fill: false
@@ -380,7 +326,7 @@ const renderChart = () => {
       label: 'Availability',
       data: tl.map(t => t.availability),
       borderColor: '#10b981',
-      borderWidth: 1.8,
+      borderWidth: 1.5,
       pointRadius: 0,
       tension: 0.3,
       fill: false
@@ -392,7 +338,7 @@ const renderChart = () => {
       label: 'Performance',
       data: tl.map(t => t.performance),
       borderColor: '#d97706',
-      borderWidth: 1.8,
+      borderWidth: 1.5,
       pointRadius: 0,
       tension: 0.3,
       fill: false
@@ -417,40 +363,32 @@ const renderChart = () => {
       scales: {
         x: {
           grid: { display: false },
-          ticks: { font: { size: 11 }, color: '#64748b', maxTicksLimit: rangeMode.value === 'week' ? 7 : 12 }
+          ticks: { font: { size: 10 }, color: '#666c8a', maxTicksLimit: 12 }
         },
         y: {
           beginAtZero: true,
           suggestedMax: 100,
-          grid: { color: '#f1f5f9' },
+          grid: { color: '#eef0f8' },
           border: { display: false },
-          ticks: { callback: v => v + '%', font: { size: 11 }, color: '#64748b', stepSize: 25 }
+          ticks: { callback: v => v + '%', font: { size: 10 }, color: '#666c8a', stepSize: 25 }
         }
       }
     }
   })
 }
 
+// OEE dihitung per bulan berjalan: tanggal 1 sampai hari ini
 const loadOperatorDashboard = async () => {
   loading.value = true
-  const todayObj = new Date()
-  const d7 = new Date()
-  d7.setDate(d7.getDate() - 6)
-  const d30 = new Date()
-  d30.setDate(d30.getDate() - 29)
-
-  const today = toLocalDate(todayObj)
-  const weekAgo = toLocalDate(d7)
-  const monthAgo = toLocalDate(d30)
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const start = toLocalDate(monthStart)
+  const end = toLocalDate(now)
   const user = displayName.value
 
   try {
-    const [resWeek, resMonth] = await Promise.all([
-      apiFetch(`dashboard.php?pic=${encodeURIComponent(user)}&start_date=${weekAgo}&end_date=${today}`),
-      apiFetch(`dashboard.php?pic=${encodeURIComponent(user)}&start_date=${monthAgo}&end_date=${today}`)
-    ])
-    dataWeek.value = resWeek || { kpi: {}, trend_timeline: [] }
-    dataMonth.value = resMonth || { kpi: {}, trend_timeline: [] }
+    const res = await apiFetch(`dashboard.php?pic=${encodeURIComponent(user)}&start_date=${start}&end_date=${end}`)
+    dataMonth.value = res || { kpi: {}, trend_timeline: [] }
     await nextTick()
     renderChart()
   } catch (err) {
@@ -519,11 +457,23 @@ const openBlankMenu = (menuName) => {
   alert(`Menu "${menuName}" masih dalam tahap persiapan / segera hadir.`)
 }
 
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape') {
+    showModalCC.value = false
+    showModalLkhOperator.value = false
+  }
+}
+
 onMounted(() => {
+  checkMobileScreen()
+  window.addEventListener('resize', checkMobileScreen)
+  document.addEventListener('keydown', handleKeyDown)
   loadOperatorDashboard()
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', checkMobileScreen)
+  document.removeEventListener('keydown', handleKeyDown)
   if (chartInstance) {
     chartInstance.destroy()
     chartInstance = null
@@ -551,395 +501,192 @@ onUnmounted(() => {
 .txt-ok { color: var(--c-ok); }
 .txt-warn { color: var(--c-warn); }
 .txt-bad { color: var(--c-bad); }
+.bg-ok { background: var(--c-ok); }
+.bg-warn { background: var(--c-warn); }
+.bg-bad { background: var(--c-bad); }
 
-.op-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--c-muted);
-}
-.op-muted {
-  font-size: 0.78rem;
-  color: var(--c-muted);
-}
-.gap-03 { gap: 0.35rem; }
+.op-eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-muted); }
+.op-muted { font-size: 0.78rem; color: var(--c-muted); }
+.op-row-gap { display: flex; gap: 0.5rem; }
 
-/* 1. Hero Greeting */
+/* ---------- Hero salam ---------- */
 .op-hero {
   text-align: center;
-  padding: 1.5rem 1.25rem;
-  margin-bottom: 1.25rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8fe 60%, #eef0fb 100%);
-  border: 1px solid #e2e4f0;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.06);
+  padding: 1.25rem 1rem;
+  margin-bottom: 0.9rem;
+  background: linear-gradient(165deg, #ffffff 0%, #f8f8fe 60%, #f3f2fd 100%);
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05);
   position: relative;
   overflow: hidden;
 }
 .op-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--c-brand), var(--c-brand-2));
 }
 .op-date-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #fff;
-  border: 1px solid #c7d2fe;
-  color: #4338ca;
-  font-size: 0.76rem;
-  font-weight: 700;
-  padding: 3px 12px;
-  border-radius: 99px;
-  margin-bottom: 0.6rem;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.08);
+  display: inline-block;
+  background: #fff; border: 1px solid #c7d2fe; color: #4338ca;
+  font-size: 0.74rem; font-weight: 700; padding: 3px 12px; border-radius: 99px; margin-bottom: 0.55rem;
 }
-.op-greeting {
-  margin: 0;
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: #15172b;
-  letter-spacing: -0.02em;
-}
+.op-greeting { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--c-ink); letter-spacing: -0.02em; }
 .op-user-name {
-  color: #4f46e5;
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.op-greeting-sub {
-  margin: 0.45rem 0 0;
-  font-size: 0.88rem;
-  color: #666c8a;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-/* 2. Empat Tombol Aksi Horizontal */
-.op-actions-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.85rem;
-  margin-bottom: 1.25rem;
-}
-.op-btn-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  background: #fff;
-  border: 1px solid var(--c-line);
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-}
-.op-btn-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.1);
-}
-.op-card-cc {
-  border-color: #c7d2fe;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
-}
-.op-card-cc .op-btn-icon {
-  background: #eef2ff;
-  color: #4f46e5;
-}
-.op-card-lkh {
-  border-color: #bbf7d0;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-}
-.op-card-lkh .op-btn-icon {
-  background: #ecfdf5;
-  color: #059669;
-}
-.op-card-disabled {
-  border-style: dashed;
-  background: #f8fafc;
-  opacity: 0.9;
-}
-.op-card-disabled .op-btn-icon {
-  background: #f1f5f9;
-  color: #64748b;
-}
-.op-btn-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.35rem;
-  flex: none;
-}
-.op-btn-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.op-btn-text b {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--c-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.op-btn-text small {
-  font-size: 0.74rem;
-  color: var(--c-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.op-tag-badge {
-  background: #e2e8f0;
-  color: #64748b;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-/* 3. Ringkasan Metrik OEE Grid */
-.op-kpi-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 0.9rem;
-  margin-bottom: 1.25rem;
-}
-.op-kpi-box {
-  background: #fff;
-  border: 1px solid var(--c-line);
-  border-radius: 14px;
-  padding: 1.1rem 1.25rem;
+/* ---------- Tombol aksi ---------- */
+.op-actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 0.9rem; }
+.op-act {
+  display: flex; align-items: center; gap: 0.7rem; width: 100%;
+  padding: 0.65rem 0.85rem; text-align: left; font-family: inherit;
+  background: #fff; border: 1px solid var(--c-line); border-radius: 12px;
   box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
-.op-kpi-box.highlight {
+.op-act:hover { background: var(--c-soft); box-shadow: 0 4px 14px rgba(21, 23, 55, 0.08); }
+.op-act-icon {
+  flex: none; width: 36px; height: 36px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.74rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.act-cc .op-act-icon { background: #eef2ff; color: var(--c-brand); }
+.act-lkh .op-act-icon { background: #d1fae5; color: #065f46; }
+.act-soon .op-act-icon { background: #f1f5f9; color: #64748b; }
+.act-soon { border-style: dashed; }
+.op-act-text { display: flex; flex-direction: column; min-width: 0; }
+.op-act-text b { font-size: 0.86rem; font-weight: 700; color: var(--c-ink); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.op-act-text small { font-size: 0.72rem; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-soon { font-style: normal; font-size: 0.62rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; background: #e2e8f0; color: #64748b; }
+
+/* ---------- OEE bulan ini ---------- */
+.op-hero-oee { display: grid; grid-template-columns: 1.1fr 2fr; gap: 0.9rem; margin-bottom: 0.9rem; }
+.op-oee, .op-pillars, .op-stats, .op-card {
+  background: #fff; border: 1px solid var(--c-line); border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05);
+}
+.op-oee {
+  padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;
   background: linear-gradient(165deg, #ffffff 0%, #f8f8fe 60%, #f3f2fd 100%);
-  border-color: #c7d2fe;
+  position: relative; overflow: hidden;
 }
-.op-kpi-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.op-oee::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--c-brand), var(--c-brand-2));
 }
-.op-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 99px;
-}
+.op-oee-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.op-oee-value { font-size: 3.2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.op-oee-value small { font-size: 1.4rem; font-weight: 700; margin-left: 2px; }
+.op-oee-foot { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--c-text); }
+
+.op-pill { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
 .op-pill.tone-ok { background: #d1fae5; color: #065f46; }
 .op-pill.tone-warn { background: #fef3c7; color: #92400e; }
 .op-pill.tone-bad { background: #fee2e2; color: #991b1b; }
 
-.op-kpi-main {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.op-kpi-val {
-  font-size: 2.6rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-.op-kpi-val small {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-left: 2px;
-}
-.op-kpi-sub {
-  font-size: 0.8rem;
-  color: var(--c-text);
-}
+.op-track { position: relative; height: 8px; background: #eef2f7; border-radius: 99px; }
+.op-track-lg { height: 12px; margin-top: 1.1rem; }
+.op-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+.op-target-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--c-ink); border-radius: 2px; }
+.op-target-mark span { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 700; color: var(--c-ink); }
 
-.op-kpi-pillars {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid var(--c-line);
-}
-.op-kpi-pillars > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.op-kpi-pillars span {
-  font-size: 0.72rem;
-  color: var(--c-muted);
-}
-.op-kpi-pillars b {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--c-ink);
-}
-.op-kpi-pillars small {
-  font-size: 0.68rem;
-  color: var(--c-muted);
-}
+.op-pillars { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0.4rem 0; }
+.op-pillar { padding: 0.8rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; }
+.op-pillar + .op-pillar { border-left: 1px solid var(--c-line); }
+.op-pillar-head { display: flex; justify-content: space-between; align-items: baseline; }
+.op-pillar-val { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
 
-/* 4. Chart Card */
-.op-chart-card {
-  background: #fff;
-  border: 1px solid var(--c-line);
-  border-radius: 14px;
-  padding: 1.1rem 1.25rem;
-  box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05);
-}
-.op-chart-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.85rem;
-  flex-wrap: wrap;
-}
-.op-chart-head h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--c-ink);
-}
-.op-chart-head p {
-  margin: 3px 0 0;
-  font-size: 0.76rem;
-  color: var(--c-muted);
-}
-.op-toggles {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-.op-toggle-btn {
-  height: 28px;
-  padding: 0 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  background: #fff;
-  border: 1px solid var(--c-line);
-  color: var(--c-muted);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.op-toggle-btn:hover {
-  background: var(--c-soft);
-}
-.op-toggle-btn.on {
-  background: #eef2ff;
-  color: var(--c-brand);
-  border-color: #c7d2fe;
-}
-.op-seg {
-  display: inline-flex;
-  background: var(--c-soft);
-  border-radius: 6px;
-  padding: 2px;
-}
-.op-seg button {
-  border: none;
-  background: transparent;
-  padding: 0 0.65rem;
-  height: 24px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--c-muted);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.op-seg button.on {
-  background: #fff;
-  color: var(--c-brand);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
-}
+/* ---------- Ringkasan volume ---------- */
+.op-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 0.9rem; }
+.op-stat { padding: 0.75rem 1.1rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
+.op-stat + .op-stat { border-left: 1px solid var(--c-line); }
+.op-stat .op-eyebrow { width: 100%; margin-bottom: 2px; }
+.op-stat b { font-size: 1.3rem; font-weight: 800; color: var(--c-ink); letter-spacing: -0.01em; }
+.op-stat small { font-size: 0.76rem; color: var(--c-muted); }
 
-.op-canvas-wrap {
-  position: relative;
-  height: 280px;
-  width: 100%;
+/* ---------- Grafik ---------- */
+.op-card { padding: 1rem 1.1rem; }
+.op-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.op-card-head h3 { margin: 0; font-size: 0.98rem; font-weight: 700; color: var(--c-ink); }
+.op-card-head p { margin: 2px 0 0; font-size: 0.75rem; color: var(--c-muted); }
+.op-toggles { display: flex; gap: 4px; }
+.op-toggles button {
+  border: 1px solid var(--c-line); background: #fff; color: var(--c-muted);
+  font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; cursor: pointer;
 }
+.op-toggles button.on { background: #eef2ff; border-color: #c7d2fe; color: var(--c-brand); }
+
+.op-canvas-wrap { position: relative; height: 280px; width: 100%; }
 .op-empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.82rem;
-  color: var(--c-muted);
-  background: rgba(255, 255, 255, 0.9);
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 0 1rem; font-size: 0.82rem; color: var(--c-muted); background: rgba(255, 255, 255, 0.88);
 }
-
-.op-chart-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid var(--c-line);
-  font-size: 0.74rem;
-  color: var(--c-muted);
-  flex-wrap: wrap;
+.op-card-foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--c-line);
 }
-.op-legend-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-.legend-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 2px;
-}
+.op-legend { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; font-size: 0.74rem; color: var(--c-muted); }
+.op-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
 .dot-oee { background: #4f46e5; }
 .dot-target { background: #e11d48; }
 .dot-avail { background: #10b981; }
 .dot-perf { background: #d97706; }
 
-/* Responsive */
+/* ---------- Tombol & input (modal) ---------- */
+.op-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 34px; padding: 0 0.85rem; font-size: 0.82rem; font-weight: 600;
+  border-radius: 8px; border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.op-btn-sm { height: 30px; padding: 0 0.6rem; }
+.op-btn-primary { background: linear-gradient(135deg, #6366f1, var(--c-brand)); color: #fff; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3); }
+.op-btn-primary:hover { background: linear-gradient(135deg, #5457ea, #4338ca); }
+.op-btn-ghost { background: #fff; color: var(--c-text); border-color: var(--c-line); }
+.op-btn-ghost:hover { background: var(--c-soft); }
+
+.op-input {
+  width: 100%; height: 34px; padding: 0 0.6rem; font-size: 0.82rem;
+  border: 1px solid var(--c-line); border-radius: 8px; background: #fff; color: var(--c-ink); min-width: 0;
+}
+.op-input:focus { outline: 2px solid rgba(79, 70, 229, 0.2); border-color: var(--c-brand); }
+.op-field { display: flex; flex-direction: column; gap: 3px; }
+.op-field label { font-size: 0.72rem; font-weight: 700; color: var(--c-muted); }
+
+.op-modal { max-width: 480px; width: 95%; }
+.op-modal-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+.op-modal-head h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--c-ink); }
+.op-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.op-modal-actions { display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.1rem; padding-top: 0.75rem; border-top: 1px solid var(--c-line); }
+
+/* ---------- Responsive ---------- */
 @media (max-width: 900px) {
-  .op-actions-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .op-kpi-grid {
-    grid-template-columns: 1fr;
+  .op-actions-row { grid-template-columns: repeat(2, 1fr); }
+  .op-hero-oee { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .op-pillars { grid-template-columns: 1fr; }
+  .op-pillar + .op-pillar { border-left: none; border-top: 1px solid var(--c-line); }
+  .op-oee-value { font-size: 2.6rem; }
+  .op-form-grid { grid-template-columns: 1fr; }
+  .op-canvas-wrap { height: 240px; }
+
+  .bottom-sheet-active { align-items: flex-end !important; padding: 0 !important; }
+  .op-modal {
+    max-width: 100% !important; width: 100% !important; max-height: 85vh !important;
+    border-radius: 14px 14px 0 0 !important; animation: opSlideUp 0.25s ease-out;
   }
 }
 
 @media (max-width: 600px) {
-  .op-greeting {
-    font-size: 1.5rem;
-  }
-  .op-actions-row {
-    grid-template-columns: 1fr;
-  }
-  .op-kpi-main {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .op-chart-head {
-    flex-direction: column;
-  }
-  .op-toggles {
-    width: 100%;
-  }
+  .op-greeting { font-size: 1.45rem; }
+  .op-act-text small { display: none; }
+  .op-stat { padding: 0.65rem 0.75rem; }
+  .op-stat b { font-size: 1.1rem; }
 }
+
+@keyframes opSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>

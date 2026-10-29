@@ -9,6 +9,7 @@ import LkhList from '../views/LkhList.vue'
 import MasterData from '../views/MasterData.vue'
 import Profile from '../views/Profile.vue'
 import ActivityLog from '../views/ActivityLog.vue'
+import AccountManagement from '../views/AccountManagement.vue'
 
 const routes = [
   { path: '/login', component: Login, meta: { guest: true } },
@@ -19,6 +20,8 @@ const routes = [
   { path: '/lkh/edit/:id', component: LkhForm, meta: { requiresAuth: true, allowedRoles: ['admin', 'operator'] } },
   { path: '/lkh', component: LkhList, meta: { requiresAuth: true } },
   { path: '/master', component: MasterData, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
+  { path: '/users', component: AccountManagement, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
+  { path: '/account-management', component: AccountManagement, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
   { path: '/logs', component: ActivityLog, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
   { path: '/profile', component: Profile, meta: { requiresAuth: true } }
 ]

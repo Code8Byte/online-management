@@ -36,6 +36,24 @@
       </div>
     </div>
 
+    <!-- Admin Shortcut: Account Management -->
+    <div v-if="authState.role === 'admin'" class="card mb-1" style="background: linear-gradient(135deg, #eef2ff, #f8fafc); border-color: #c7d2fe;">
+      <div class="d-flex justify-between align-center flex-wrap gap-1">
+        <div class="d-flex align-center gap-08">
+          <div style="font-size: 1.8rem;">👥</div>
+          <div>
+            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #3730a3;">Account Management</h4>
+            <p style="margin: 2px 0 0 0; font-size: 0.82rem; color: #4338ca;">
+              Kelola seluruh akun pengguna, eskalasi perubahan tingkat hak akses (Operator, Viewer, Admin), dan reset password.
+            </p>
+          </div>
+        </div>
+        <router-link to="/users" class="btn btn-primary btn-sm" style="text-decoration: none;">
+          Kelola Akun &amp; Role ➔
+        </router-link>
+      </div>
+    </div>
+
     <!-- Change Password Card -->
     <div class="card">
       <div class="card-title d-flex align-center gap-05" style="border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
