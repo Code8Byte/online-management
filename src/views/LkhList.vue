@@ -83,49 +83,57 @@
     <div v-if="list.length === 0" class="lv-card lv-empty">Tidak ada data LKH yang sesuai filter.</div>
 
     <div v-else class="lv-list">
+
+      <!-- Judul kolom (hanya tampil di layar lebar) -->
+      <div class="lv-cols" aria-hidden="true">
+        <span>Shift</span>
+        <span>Tanggal</span>
+        <span>Mesin</span>
+        <span>No PP / Produk</span>
+        <span class="r">Proses (pcs)</span>
+        <span class="r">DT (menit)</span>
+        <span>Operator</span>
+        <span>PIC</span>
+        <span class="r">Aksi</span>
+      </div>
+
       <article v-for="l in list" :key="l.pp_item_id || l.id" class="lv-item" :class="'sh-' + l.shift">
         <div class="lv-item-bar"></div>
         <div class="lv-item-body">
 
-          <!-- Baris 1: tanggal, shift, mesin -->
-          <div class="lv-item-top">
-            <span class="lv-shift">Shift {{ l.shift }}</span>
-            <span class="lv-date">{{ l.tanggal }}</span>
-            <span class="lv-mesin">{{ l.mesin_nama }}</span>
+          <div class="c c-shift"><span class="lv-shift">Shift {{ l.shift }}</span></div>
+          <div class="c c-date"><span class="lv-date">{{ l.tanggal }}</span></div>
+          <div class="c c-mesin"><span class="lv-mesin">{{ l.mesin_nama }}</span></div>
+
+          <div class="c c-pp">
+            <div class="lv-item-pp">
+              <b class="lv-pp-no">{{ l.no_pp }}</b>
+              <span class="lv-tahap" :class="'tahap-' + (l.tahap_sortir || 'S1')">{{ l.tahap_sortir || 'S1' }}</span>
+              <span v-if="l.is_pending || l.pp_status === 'req'" class="lv-pill tone-warn">Req &middot; pending OEE</span>
+              <span v-if="l.pp_count > 1" class="lv-pill tone-brand" :title="`Bagian dari shift dengan ${l.pp_count} PP`">PP #{{ l.urutan }}</span>
+            </div>
+            <div class="lv-produk">{{ l.produk_nama }}</div>
           </div>
 
-          <!-- Baris 2: PP + produk -->
-          <div class="lv-item-pp">
-            <b class="lv-pp-no">{{ l.no_pp }}</b>
-            <span class="lv-tahap" :class="'tahap-' + (l.tahap_sortir || 'S1')">{{ l.tahap_sortir || 'S1' }}</span>
-            <span v-if="l.is_pending || l.pp_status === 'req'" class="lv-pill tone-warn">Req &middot; pending OEE</span>
-            <span v-if="l.pp_count > 1" class="lv-pill tone-brand" :title="`Bagian dari shift dengan ${l.pp_count} PP`">PP #{{ l.urutan }}</span>
+          <div class="c c-proses">
+            <span class="lv-lbl">Proses</span>
+            <b>{{ Number(l.total_proses).toLocaleString('id-ID') }}</b><small>pcs</small>
           </div>
-          <div class="lv-produk">{{ l.produk_nama }}</div>
-
-          <!-- Baris 3: angka -->
-          <div class="lv-metrics">
-            <div>
-              <span class="lv-eyebrow">Proses</span>
-              <b>{{ Number(l.total_proses).toLocaleString('id-ID') }}</b><small>pcs</small>
-            </div>
-            <div>
-              <span class="lv-eyebrow">Downtime</span>
-              <b v-if="Number(l.total_dt_menit) > 0" class="txt-warn">{{ l.total_dt_menit }}</b>
-              <b v-else class="lv-zero">0</b><small>menit</small>
-            </div>
-            <div>
-              <span class="lv-eyebrow">Operator</span>
-              <b class="lv-text">{{ l.operator || '-' }}</b>
-            </div>
-            <div>
-              <span class="lv-eyebrow">PIC</span>
-              <b class="lv-text">{{ l.pic || '-' }}</b>
-            </div>
+          <div class="c c-dt">
+            <span class="lv-lbl">Downtime</span>
+            <b v-if="Number(l.total_dt_menit) > 0" class="txt-warn">{{ l.total_dt_menit }}</b>
+            <b v-else class="lv-zero">0</b><small>menit</small>
+          </div>
+          <div class="c c-op">
+            <span class="lv-lbl">Operator</span>
+            <b class="lv-text">{{ l.operator || '-' }}</b>
+          </div>
+          <div class="c c-pic">
+            <span class="lv-lbl">PIC</span>
+            <b class="lv-text">{{ l.pic || '-' }}</b>
           </div>
 
-          <!-- Aksi -->
-          <div class="lv-actions">
+          <div class="c c-act lv-actions">
             <button type="button" class="lv-btn lv-btn-dark lv-btn-sm" @click="viewLkh(l)">Lihat</button>
             <router-link v-if="canEdit(l)" :to="`/lkh/edit/${l.id}`" class="lv-btn lv-btn-ghost lv-btn-sm">Edit</router-link>
             <span
@@ -576,7 +584,7 @@ onUnmounted(() => {
 .lv-muted { color: var(--c-muted); font-size: 0.78rem; }
 .lv-spacer { flex: 1; }
 .lv-pad { margin: 0.5rem 0 0; }
-.lv-mobile-only { display: none; }
+.lv-btn.lv-mobile-only { display: none; }
 .lv-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-muted); }
 .txt-ok { color: var(--c-ok); }
 .txt-warn { color: var(--c-warn); }
@@ -617,7 +625,7 @@ onUnmounted(() => {
 .lv-field label { font-size: 0.72rem; font-weight: 700; color: var(--c-muted); }
 
 /* ---------- Filter ---------- */
-.lv-filter { position: sticky; top: 0; z-index: 25; padding: 4px 0 10px; background: var(--bg, #f4f5fb); }
+.lv-filter { padding: 4px 0 10px; }
 .lv-filter-card {
   background: #fff; border: 1px solid var(--c-line); border-radius: 14px;
   padding: 0.7rem 0.85rem; box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05);
@@ -647,18 +655,41 @@ onUnmounted(() => {
 /* ---------- Daftar ---------- */
 .lv-card { background: #fff; border: 1px solid var(--c-line); border-radius: 14px; box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05); }
 .lv-empty { padding: 2.5rem 1rem; text-align: center; color: var(--c-muted); font-size: 0.85rem; }
-.lv-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+.lv-list {
+  --lv-cols: 84px 92px 96px minmax(220px, 1.8fr) 104px 84px minmax(80px, 1fr) minmax(80px, 1fr) 200px;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+
+/* Judul kolom (desktop) */
+.lv-cols {
+  display: grid; grid-template-columns: var(--lv-cols); gap: 0.75rem; align-items: center;
+  padding: 0 0.9rem 0 calc(6px + 0.9rem);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-muted);
+}
+.lv-cols .r { text-align: right; }
 
 .lv-item {
-  display: flex; background: #fff; border: 1px solid var(--c-line); border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(21, 23, 55, 0.05); overflow: hidden; min-width: 0;
+  display: flex; background: #fff; border: 1px solid var(--c-line); border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(21, 23, 55, 0.05); overflow: hidden; min-width: 0;
   transition: box-shadow 0.15s;
 }
-.lv-item:hover { box-shadow: 0 6px 20px rgba(21, 23, 55, 0.09); }
+.lv-item:hover { box-shadow: 0 4px 16px rgba(21, 23, 55, 0.09); }
 .lv-item-bar { flex: none; width: 6px; background: var(--sh, var(--c-line)); }
-.lv-item-body { flex: 1; min-width: 0; padding: 0.75rem 0.9rem; display: flex; flex-direction: column; gap: 0.45rem; }
-
-.lv-item-top { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.lv-item-body {
+  flex: 1; min-width: 0; padding: 0.6rem 0.9rem;
+  display: grid; grid-template-columns: var(--lv-cols); gap: 0.75rem; align-items: center;
+}
+.lv-item-body .c { min-width: 0; }
+.lv-item-body .c b { font-size: 0.92rem; font-weight: 800; color: var(--c-ink); }
+.lv-item-body .c b.lv-text { font-size: 0.82rem; font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lv-item-body .c small { font-size: 0.68rem; color: var(--c-muted); margin-left: 3px; }
+.lv-item-body .c-proses, .lv-item-body .c-dt { text-align: right; }
+.lv-item-body .c-act { justify-content: flex-end; flex-wrap: nowrap; }
+.lv-lbl { display: none; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-muted); }
+.lv-item-body .lv-mesin { margin-left: 0; text-align: left; }
+@media (min-width: 901px) {
+  .lv-item-body small { display: none; }
+}
 .lv-shift {
   display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 2px 10px; border-radius: 99px;
   background: var(--sh-bg); color: var(--sh-ink); letter-spacing: 0.02em;
@@ -680,14 +711,6 @@ onUnmounted(() => {
 .lv-pill.tone-brand { background: #eef2ff; color: #3730a3; }
 .lv-pill.tone-neutral { background: var(--c-soft); color: var(--c-text); border: 1px solid var(--c-line); }
 
-.lv-metrics {
-  display: grid; grid-template-columns: 1.2fr 1fr 1.2fr 1.2fr; gap: 0.5rem;
-  padding: 0.55rem 0.7rem; background: var(--c-soft); border-radius: 10px;
-}
-.lv-metrics > div { display: flex; flex-direction: column; min-width: 0; }
-.lv-metrics b { font-size: 1rem; font-weight: 800; color: var(--c-ink); }
-.lv-metrics b.lv-text { font-size: 0.8rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lv-metrics small { font-size: 0.68rem; color: var(--c-muted); }
 .lv-zero { color: var(--c-muted) !important; }
 
 .lv-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -801,19 +824,53 @@ onUnmounted(() => {
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1100px) {
-  .lv-list { grid-template-columns: 1fr; }
+/* Desktop: shift + semua filter dalam satu baris */
+@media (min-width: 769px) {
+  .lv-filter-card { display: grid; grid-template-columns: auto 1fr; column-gap: 1rem; row-gap: 0.65rem; align-items: end; }
+  .lv-filter-card > .lv-row-flex:first-child { grid-column: 1 / -1; }
+  .lv-row-shift { margin-top: 0; }
+  .lv-filter-body { margin-top: 0; padding-top: 0; border-top: none; display: flex; align-items: flex-end; gap: 0.6rem; }
+  .lv-filter-body .lv-grid { flex: 1; }
+  .lv-filter-actions { margin-top: 0; }
+}
+
+/* Tablet & HP: baris berubah jadi kartu */
+@media (max-width: 900px) {
+  .lv-cols { display: none; }
+  .lv-item-body {
+    grid-template-columns: repeat(4, 1fr); gap: 0.45rem 0.6rem; padding: 0.75rem 0.9rem;
+    grid-template-areas:
+      "shift date date mesin"
+      "pp pp pp pp"
+      "proses proses dt dt"
+      "op op pic pic"
+      "act act act act";
+  }
+  .lv-item-body .c-shift { grid-area: shift; }
+  .lv-item-body .c-date { grid-area: date; }
+  .lv-item-body .c-mesin { grid-area: mesin; text-align: right; }
+  .lv-item-body .c-pp { grid-area: pp; }
+  .lv-item-body .c-proses { grid-area: proses; text-align: left; }
+  .lv-item-body .c-dt { grid-area: dt; text-align: left; }
+  .lv-item-body .c-op { grid-area: op; }
+  .lv-item-body .c-pic { grid-area: pic; }
+  .lv-item-body .c-act { grid-area: act; justify-content: stretch; margin-top: 0.2rem; }
+  .lv-item-body .c-proses, .lv-item-body .c-dt, .lv-item-body .c-op, .lv-item-body .c-pic {
+    background: var(--c-soft); border-radius: 8px; padding: 0.4rem 0.6rem;
+  }
+  .lv-lbl { display: block; }
+  .lv-item-body .c b { font-size: 1rem; }
+  .lv-item-body .c b.lv-text { font-size: 0.85rem; }
 }
 
 @media (max-width: 768px) {
-  .lv-mobile-only { display: inline-flex; }
+  .lv-btn.lv-mobile-only { display: inline-flex; }
   .lv-filter-body { display: none; }
-  .lv-filter-body.open { display: block; }
+  .lv-filter-body.open { display: block; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px dashed var(--c-line); }
   .lv-grid { grid-template-columns: 1fr 1fr; }
   .lv-seg { display: flex; width: 100%; }
   .lv-seg button { flex: 1; justify-content: center; padding: 0 0.3rem; }
 
-  .lv-metrics { grid-template-columns: 1fr 1fr; }
   .lv-actions .lv-btn { flex: 1; }
 
   .lv-info { grid-template-columns: 1fr 1fr; }

@@ -39,6 +39,14 @@ if (!empty($_GET['produk_nama'])) { $where[] = "p.nama LIKE ?"; $params[] = "%" 
 if (!empty($_GET['pp_id'])) { $where[] = "lkh.pp_id = ?"; $params[] = $_GET['pp_id']; }
 if (!empty($_GET['tahap_sortir'])) { $where[] = "lkh.tahap_sortir = ?"; $params[] = $_GET['tahap_sortir']; }
 if (!empty($_GET['no_pp'])) { $where[] = "pp.no_pp LIKE ?"; $params[] = "%" . trim($_GET['no_pp']) . "%"; }
+if (!empty($_GET['pic'])) {
+    $cleanPic = trim($_GET['pic']);
+    $where[] = "(lkh.pic = ? OR lkh.operator = ? OR lkh.pic LIKE ? OR lkh.operator LIKE ?)";
+    $params[] = $cleanPic;
+    $params[] = $cleanPic;
+    $params[] = "%$cleanPic%";
+    $params[] = "%$cleanPic%";
+}
 
 $whereSql = implode(" AND ", $where);
 $joinSql = "FROM lkh JOIN pp ON lkh.pp_id = pp.id JOIN produk p ON pp.produk_id = p.id JOIN mesin m ON lkh.mesin_id = m.id";
