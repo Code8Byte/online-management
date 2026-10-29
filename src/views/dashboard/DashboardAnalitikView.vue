@@ -1,25 +1,6 @@
 <template>
   <div class="dv">
 
-    <!-- ============ HEADER CETAK ============ -->
-    <div class="print-only dv-print-head">
-      <div class="dv-print-brand">DS</div>
-      <div class="dv-print-main">
-        <h2>Divisi Sortir &mdash; Laporan Kinerja &amp; OEE</h2>
-        <div class="dv-print-meta">
-          <span>Periode: <b>{{ filter.start_date || 'Awal' }} s/d {{ filter.end_date || 'Akhir' }}</b></span>
-          <span v-if="filter.shift">Shift: <b>{{ filter.shift }}</b></span>
-          <span v-if="filter.tahap_sortir">Tahap: <b>{{ filter.tahap_sortir }}</b></span>
-          <span v-if="filter.no_pp">PP: <b>{{ filter.no_pp }}</b></span>
-          <span v-if="filter.produk_ids.length">Produk: <b>{{ filter.produk_ids.length }} item</b></span>
-        </div>
-      </div>
-      <div class="dv-print-user">
-        <div>Dicetak oleh <b>{{ currentUsername }}</b></div>
-        <div>{{ printDateTime }}</div>
-      </div>
-    </div>
-
     <!-- ============ FILTER BAR ============ -->
     <div class="dv-filter no-print">
       <div class="dv-filter-card">
@@ -147,8 +128,8 @@
       </div>
     </div>
 
-    <!-- ============ LEMBAR LAPORAN DASHBOARD (1 HALAMAN RINGKAS) ============ -->
-    <div class="dv-report-sheet">
+    <!-- ============ TAMPILAN DASHBOARD SCREEN (2x2 STANDAR SEPERTI SEBELUMNYA) ============ -->
+    <div class="dv-screen-view no-print">
 
       <!-- HERO: OEE + 3 pilar -->
       <section class="dv-hero">
@@ -209,18 +190,17 @@
         </div>
       </section>
 
-      <!-- 3 Grafik Utama (Tren OEE, Pareto Downtime, Pareto Cacat) -->
-      <section class="dv-charts dv-charts-3col">
-        <!-- 1. Tren OEE -->
+      <!-- Baris Grafik 1: Tren OEE & Pareto Downtime -->
+      <section class="dv-charts">
         <div class="dv-card">
           <div class="dv-card-head">
             <div>
               <h3>Tren OEE</h3>
-              <p>Target OEE 85%</p>
+              <p>Naik atau turun dibanding target 85%</p>
             </div>
-            <div class="dv-toggles no-print">
-              <button type="button" :class="{ on: trendShow.availability }" @click="toggleTrend('availability')">Avail</button>
-              <button type="button" :class="{ on: trendShow.performance }" @click="toggleTrend('performance')">Perf</button>
+            <div class="dv-toggles">
+              <button type="button" :class="{ on: trendShow.availability }" @click="toggleTrend('availability')">Availability</button>
+              <button type="button" :class="{ on: trendShow.performance }" @click="toggleTrend('performance')">Performance</button>
             </div>
           </div>
           <div class="dv-canvas">
@@ -229,28 +209,32 @@
           </div>
         </div>
 
-        <!-- 2. Pareto Downtime -->
         <div class="dv-card">
           <div class="dv-card-head">
             <div>
-              <h3>Pareto Downtime</h3>
-              <p class="no-print">Klik batang untuk melihat rincian kendala</p>
-              <p class="print-only">Durasi waktu berhenti</p>
+              <h3>Penyebab downtime terbesar</h3>
+              <p>Klik batang untuk melihat rincian kendala</p>
             </div>
-            <span class="dv-pill tone-neutral">{{ fmt(totalDowntimeAll) }} mnt</span>
+            <span class="dv-pill tone-neutral">{{ fmt(totalDowntimeAll) }} menit</span>
           </div>
           <div class="dv-canvas">
             <canvas id="chartParetoDowntimeRef"></canvas>
             <div v-if="!(data.pareto_downtime || []).length" class="dv-empty">Tidak ada downtime tercatat</div>
           </div>
+          <div v-if="(data.pareto_downtime || []).length > TOP_N" class="dv-card-foot">
+            Menampilkan {{ TOP_N }} teratas dari {{ data.pareto_downtime.length }} kategori &middot;
+            mencakup {{ topCoverage(data.pareto_downtime, 'total_menit') }}% total
+          </div>
         </div>
+      </section>
 
-        <!-- 3. Pareto Cacat -->
+      <!-- Baris Grafik 2: Pareto Cacat & 8 Waste -->
+      <section class="dv-charts">
         <div class="dv-card">
           <div class="dv-card-head">
             <div>
-              <h3>Pareto Cacat (Reject WIP)</h3>
-              <p>Cacat bahan cetakan</p>
+              <h3>Jenis cacat terbanyak (Reject WIP)</h3>
+              <p>Cacat bahan cetakan yang masuk ke sortir</p>
             </div>
             <span class="dv-pill tone-neutral">{{ fmt(totalCacatAll) }} pcs</span>
           </div>
@@ -258,59 +242,17 @@
             <canvas id="chartParetoCacatRef"></canvas>
             <div v-if="!(data.pareto_cacat || []).length" class="dv-empty">Tidak ada cacat tercatat</div>
           </div>
-        </div>
-      </section>
-
-      <!-- Baris Rincian: Alasan Downtime, 8 Waste, Analisis & Rekomendasi -->
-      <section class="dv-details-grid">
-        <!-- Rincian Alasan Downtime (Downtime Reasons Breakdown) -->
-        <div class="dv-card dv-reasons-card">
-          <div class="dv-card-head">
-            <div>
-              <h3>Rincian Alasan Downtime</h3>
-              <p class="no-print">Uraian kendala terbanyak per kategori &middot; Klik baris untuk detail</p>
-              <p class="print-only">Daftar kendala spesifik per kode downtime</p>
-            </div>
-            <span class="dv-pill tone-neutral">{{ (data.pareto_downtime || []).length }} kategori</span>
+          <div v-if="(data.pareto_cacat || []).length > TOP_N" class="dv-card-foot">
+            Menampilkan {{ TOP_N }} teratas dari {{ data.pareto_cacat.length }} jenis &middot;
+            mencakup {{ topCoverage(data.pareto_cacat, 'total_qty') }}% total
           </div>
-          <div v-if="topDowntimeWithReasons.length" class="dv-reasons-table-wrap">
-            <table class="dv-reasons-table">
-              <thead>
-                <tr>
-                  <th width="125">Kategori</th>
-                  <th width="85" class="text-right">Durasi</th>
-                  <th width="45" class="text-right">%</th>
-                  <th>Alasan / Kendala Terbanyak</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="dt in topDowntimeWithReasons" :key="dt.id" class="dv-clickable-row" @click="openDrilldown(dt)" title="Klik untuk rincian lengkap">
-                  <td>
-                    <b>[{{ dt.kode }}]</b> <span class="dv-muted">{{ dt.arti }}</span>
-                  </td>
-                  <td class="text-right"><b>{{ dt.total_menit }}</b> mnt <small class="dv-muted">({{ dt.frekuensi }}x)</small></td>
-                  <td class="text-right"><b>{{ dt.persentase }}%</b></td>
-                  <td>
-                    <div class="dv-reasons-tags">
-                      <span v-for="(k, kidx) in (dt.top_keterangan || []).slice(0, 3)" :key="kidx" class="dv-reason-chip" :title="k.keterangan">
-                        {{ k.keterangan }} <small>({{ k.total_menit }}m &middot; {{ k.frekuensi }}x)</small>
-                      </span>
-                      <span v-if="!dt.top_keterangan || !dt.top_keterangan.length" class="dv-muted">-</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="dv-empty static">Tidak ada downtime tercatat</div>
         </div>
 
-        <!-- Waktu Terbuang (8 Waste) -->
-        <div class="dv-card dv-waste-card">
+        <div class="dv-card">
           <div class="dv-card-head">
             <div>
-              <h3>Waktu Terbuang (8 Waste)</h3>
-              <p>Berdasarkan Lean</p>
+              <h3>Waktu terbuang per jenis waste</h3>
+              <p>Berdasarkan 8 Waste (Lean)</p>
             </div>
           </div>
           <div v-if="wasteTop.length" class="dv-waste">
@@ -324,31 +266,208 @@
           </div>
           <div v-else class="dv-empty static">Tidak ada data waste tercatat</div>
         </div>
+      </section>
 
-        <!-- Insight & Rekomendasi -->
-        <div class="dv-card dv-insight-card">
-          <div class="dv-card-head">
-            <div>
-              <h3>Analisis &amp; Tindak Lanjut</h3>
-              <p>Otomatis dari filter aktif</p>
-            </div>
+      <!-- Baris 3: Insight & Rekomendasi -->
+      <section class="dv-card dv-insight">
+        <div class="dv-card-head">
+          <div>
+            <h3>Yang perlu ditindaklanjuti</h3>
+            <p>Dihitung otomatis dari data pada filter terpilih</p>
           </div>
-          <div v-if="!insights.length" class="dv-empty static">Belum cukup data untuk menghasilkan analisis.</div>
-          <div v-else class="dv-insight-list">
-            <div v-for="(it, i) in insights" :key="i" class="dv-insight-item" :class="'tone-' + it.tone">
-              <span class="dv-insight-no">{{ i + 1 }}</span>
-              <div>
-                <b>{{ it.title }}</b>
-                <p>{{ it.text }}</p>
-              </div>
+        </div>
+        <div v-if="!insights.length" class="dv-empty static">Belum cukup data untuk menghasilkan analisis.</div>
+        <div v-else class="dv-insight-list">
+          <div v-for="(it, i) in insights" :key="i" class="dv-insight-item" :class="'tone-' + it.tone">
+            <span class="dv-insight-no">{{ i + 1 }}</span>
+            <div>
+              <b>{{ it.title }}</b>
+              <p>{{ it.text }}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Footer Cetak (Hanya tampil saat dicetak 1 lembar) -->
-      <div class="print-only dv-print-foot">
-        <span>Divisi Sortir &mdash; Sistem LKH &amp; OEE &middot; PT Pura Barutama</span>
+    </div>
+
+    <!-- ============ LEMBAR CETAK DASHBOARD (KHUSUS CETAK 1 HALAMAN A4 LANDSCAPE) ============ -->
+    <div class="print-only dv-print-sheet">
+
+      <!-- Header Cetak -->
+      <div class="dv-p-head">
+        <div class="dv-p-brand">DS</div>
+        <div class="dv-p-title-wrap">
+          <h2>Divisi Sortir &mdash; Laporan Kinerja &amp; OEE</h2>
+          <div class="dv-p-meta">
+            <span>Periode: <b>{{ filter.start_date || 'Awal' }} s/d {{ filter.end_date || 'Akhir' }}</b></span>
+            <span v-if="filter.shift">&middot; Shift: <b>{{ filter.shift }}</b></span>
+            <span v-if="filter.tahap_sortir">&middot; Tahap: <b>{{ filter.tahap_sortir }}</b></span>
+            <span v-if="filter.no_pp">&middot; PP: <b>{{ filter.no_pp }}</b></span>
+            <span v-if="filter.produk_ids.length">&middot; Produk: <b>{{ filter.produk_ids.length }} item</b></span>
+          </div>
+        </div>
+        <div class="dv-p-user">
+          <div>Dicetak oleh: <b>{{ currentUsername }}</b></div>
+          <div>{{ printDateTime }}</div>
+        </div>
+      </div>
+
+      <!-- Ringkasan Eksekutif KPI (Strip Horizontal Ringkas) -->
+      <div class="dv-p-kpi-strip">
+        <div class="dv-p-kpi-item highlight">
+          <span class="lbl">OEE KESELURUHAN</span>
+          <span class="val" :class="'txt-' + oeeTone">{{ oeeVal.toFixed(1) }}%</span>
+          <span class="sub">{{ kpiStatusText }} &middot; Tgt 85%</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">AVAILABILITY</span>
+          <span class="val" :class="'txt-' + rateTone(data.kpi?.availability, 90)">{{ (Number(data.kpi?.availability) || 0).toFixed(1) }}%</span>
+          <span class="sub">Target 90%</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">PERFORMANCE</span>
+          <span class="val" :class="'txt-' + rateTone(data.kpi?.performance, 95)">{{ (Number(data.kpi?.performance) || 0).toFixed(1) }}%</span>
+          <span class="sub">Target 95%</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">QUALITY OEE</span>
+          <span class="val" :class="'txt-' + rateTone(data.kpi?.quality_oee, 99)">{{ (Number(data.kpi?.quality_oee) || 0).toFixed(1) }}%</span>
+          <span class="sub">Target 99%</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">TOTAL PROSES</span>
+          <span class="val">{{ fmt(data.kpi?.total_proses) }}</span>
+          <span class="sub">lembar / pcs</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">PRODUK BAIK</span>
+          <span class="val txt-ok">{{ fmt(data.kpi?.good) }}</span>
+          <span class="sub">lembar / pcs</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">REJECT TOTAL</span>
+          <span class="val txt-bad">{{ (Number(data.kpi?.ng_percent) || 0).toFixed(2) }}%</span>
+          <span class="sub">{{ fmt(totalRejectPcs) }} pcs</span>
+        </div>
+        <div class="dv-p-kpi-item">
+          <span class="lbl">KUALITAS WIP</span>
+          <span class="val" :class="'txt-' + rateTone(data.kpi?.quality_wip, 95)">{{ (Number(data.kpi?.quality_wip) || 0).toFixed(1) }}%</span>
+          <span class="sub">Target 95%</span>
+        </div>
+      </div>
+
+      <!-- 3 Grafik Utama (Berdampingan) -->
+      <div class="dv-p-charts-grid">
+        <div class="dv-p-card">
+          <div class="dv-p-card-head">
+            <b>1. Tren OEE</b>
+            <span>Target 85%</span>
+          </div>
+          <div class="dv-p-chart-body">
+            <img v-if="chartOeeImg" :src="chartOeeImg" class="dv-p-chart-img" alt="Tren OEE" />
+            <div v-else class="dv-p-no-chart">Memuat grafik...</div>
+          </div>
+        </div>
+
+        <div class="dv-p-card">
+          <div class="dv-p-card-head">
+            <b>2. Pareto Downtime</b>
+            <span>{{ fmt(totalDowntimeAll) }} menit</span>
+          </div>
+          <div class="dv-p-chart-body">
+            <img v-if="chartDtImg" :src="chartDtImg" class="dv-p-chart-img" alt="Pareto Downtime" />
+            <div v-else class="dv-p-no-chart">Tidak ada downtime</div>
+          </div>
+        </div>
+
+        <div class="dv-p-card">
+          <div class="dv-p-card-head">
+            <b>3. Pareto Cacat (Reject WIP)</b>
+            <span>{{ fmt(totalCacatAll) }} pcs</span>
+          </div>
+          <div class="dv-p-chart-body">
+            <img v-if="chartCcImg" :src="chartCcImg" class="dv-p-chart-img" alt="Pareto Cacat" />
+            <div v-else class="dv-p-no-chart">Tidak ada cacat</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Baris Rincian Data: Alasan Downtime, 8 Waste, Analisis -->
+      <div class="dv-p-details-grid">
+        <!-- Rincian Alasan Downtime -->
+        <div class="dv-p-card dv-p-reasons-card">
+          <div class="dv-p-card-head">
+            <b>Rincian Alasan Downtime (Top {{ TOP_N }})</b>
+            <span>Durasi &amp; Uraian Kendala</span>
+          </div>
+          <table class="dv-p-table">
+            <thead>
+              <tr>
+                <th width="115">Kategori</th>
+                <th width="75" class="text-right">Durasi</th>
+                <th width="38" class="text-right">%</th>
+                <th>Alasan / Kendala Terbanyak</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="dt in topDowntimeWithReasons" :key="dt.id">
+                <td><b>[{{ dt.kode }}]</b> {{ dt.arti }}</td>
+                <td class="text-right"><b>{{ dt.total_menit }}</b>m <small>({{ dt.frekuensi }}x)</small></td>
+                <td class="text-right">{{ dt.persentase }}%</td>
+                <td>
+                  <div class="dv-p-chips">
+                    <span v-for="(k, kidx) in (dt.top_keterangan || []).slice(0, 3)" :key="kidx" class="dv-p-chip">
+                      {{ k.keterangan }} <small>({{ k.total_menit }}m &middot; {{ k.frekuensi }}x)</small>
+                    </span>
+                    <span v-if="!dt.top_keterangan || !dt.top_keterangan.length" class="dv-muted">-</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!topDowntimeWithReasons.length">
+                <td colspan="4" class="text-center dv-muted">Tidak ada data downtime</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 8 Waste -->
+        <div class="dv-p-card dv-p-waste-card">
+          <div class="dv-p-card-head">
+            <b>Waktu Terbuang (8 Waste)</b>
+            <span>Lean Analysis</span>
+          </div>
+          <div class="dv-p-waste-list">
+            <div v-for="w in wasteTop" :key="w.jenis_waste" class="dv-p-waste-row">
+              <span class="w-name">{{ w.jenis_waste }}</span>
+              <div class="w-bar-wrap"><div class="w-bar" :style="{ width: w.persentase + '%' }"></div></div>
+              <span class="w-num"><b>{{ fmt(w.total_menit) }}</b>m <small>{{ w.persentase.toFixed(0) }}%</small></span>
+            </div>
+            <div v-if="!wasteTop.length" class="dv-muted text-center" style="padding: 10px 0;">Tidak ada waste tercatat</div>
+          </div>
+        </div>
+
+        <!-- Rekomendasi & Analisis -->
+        <div class="dv-p-card dv-p-insight-card">
+          <div class="dv-p-card-head">
+            <b>Analisis &amp; Rekomendasi</b>
+            <span>Evaluasi Otomatis</span>
+          </div>
+          <div class="dv-p-insight-list">
+            <div v-for="(it, i) in insights" :key="i" class="dv-p-insight-item" :class="'tone-' + it.tone">
+              <span class="no">{{ i + 1 }}</span>
+              <div class="body">
+                <b>{{ it.title }}</b>
+                <p>{{ it.text }}</p>
+              </div>
+            </div>
+            <div v-if="!insights.length" class="dv-muted text-center" style="padding: 10px 0;">Belum cukup data analisis</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Cetak -->
+      <div class="dv-p-foot">
+        <span>Sistem LKH &amp; OEE Divisi Sortir &middot; PT Pura Barutama</span>
         <span>Dicetak: {{ printDateTime }} oleh {{ currentUsername }}</span>
         <span>Halaman 1 dari 1 (Ringkasan Eksekutif)</span>
       </div>
@@ -561,6 +680,20 @@ const trendShow = reactive({ availability: false, performance: false })
 let chartTrendOee = null
 let chartParetoDt = null
 let chartParetoCc = null
+
+const chartOeeImg = ref('')
+const chartDtImg = ref('')
+const chartCcImg = ref('')
+
+const captureChartImages = () => {
+  try {
+    if (chartTrendOee) chartOeeImg.value = chartTrendOee.toBase64Image('image/png', 1)
+    if (chartParetoDt) chartDtImg.value = chartParetoDt.toBase64Image('image/png', 1)
+    if (chartParetoCc) chartCcImg.value = chartParetoCc.toBase64Image('image/png', 1)
+  } catch (e) {
+    console.warn('Could not capture chart images', e)
+  }
+}
 
 const showProdukDropdown = ref(false)
 const searchProduk = ref('')
@@ -840,24 +973,21 @@ const submitExportCC = (format = 'xlsx') => {
 }
 
 const handleBeforePrint = () => {
-  if (chartTrendOee) chartTrendOee.resize()
-  if (chartParetoDt) chartParetoDt.resize()
-  if (chartParetoCc) chartParetoCc.resize()
+  printDateTime.value = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })
+  captureChartImages()
 }
 
 const handleAfterPrint = () => {
-  if (chartTrendOee) chartTrendOee.resize()
-  if (chartParetoDt) chartParetoDt.resize()
-  if (chartParetoCc) chartParetoCc.resize()
+  // Screen charts remain intact
 }
 
 const printDashboard = async () => {
   printDateTime.value = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })
+  captureChartImages()
   await nextTick()
-  handleBeforePrint()
   setTimeout(() => {
     window.print()
-  }, 120)
+  }, 100)
 }
 
 const resetFilter = () => {
@@ -1081,6 +1211,7 @@ const renderAllCharts = () => {
   renderTrendChart()
   renderParetoDowntime()
   renderParetoCacat()
+  setTimeout(captureChartImages, 350)
 }
 
 onMounted(async () => {
@@ -1303,26 +1434,6 @@ onUnmounted(() => {
 
 /* ---------- Charts ---------- */
 .dv-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.9rem; margin-bottom: 0.9rem; }
-.dv-charts-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; margin-bottom: 0.9rem; }
-
-.dv-details-grid { display: grid; grid-template-columns: 1.4fr 0.9fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem; }
-
-/* Reasons table */
-.dv-reasons-table-wrap { overflow-x: auto; max-height: 280px; }
-.dv-reasons-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-.dv-reasons-table th {
-  position: sticky; top: 0; background: var(--c-soft); text-align: left; padding: 6px 8px;
-  font-size: 0.7rem; text-transform: uppercase; color: var(--c-muted); font-weight: 700; border-bottom: 1px solid var(--c-line);
-}
-.dv-reasons-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-.dv-clickable-row { cursor: pointer; transition: background 0.15s; }
-.dv-clickable-row:hover { background: #f8fafc; }
-.dv-reasons-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.dv-reason-chip {
-  display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; color: #1e293b;
-  border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; font-size: 0.72rem; line-height: 1.3;
-}
-.dv-reason-chip small { color: #64748b; font-weight: 600; }
 .dv-card { padding: 1rem 1.1rem; display: flex; flex-direction: column; }
 .dv-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
 .dv-card-head h3 { margin: 0; font-size: 0.98rem; font-weight: 700; color: var(--c-ink); }
@@ -1383,8 +1494,6 @@ onUnmounted(() => {
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
   .dv-hero { grid-template-columns: 1fr; }
-  .dv-charts-3col { grid-template-columns: 1fr; }
-  .dv-details-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
@@ -1396,8 +1505,6 @@ onUnmounted(() => {
   .dv-stat:nth-child(3) { border-left: none; }
   .dv-stat:nth-child(n+3) { border-top: 1px solid var(--c-line); }
   .dv-charts { grid-template-columns: 1fr; }
-  .dv-charts-3col { grid-template-columns: 1fr; }
-  .dv-details-grid { grid-template-columns: 1fr; }
   .dv-canvas { height: 240px; }
   .dv-oee-value { font-size: 2.6rem; }
   .dv-waste-row { grid-template-columns: 1fr 1fr; }
@@ -1413,295 +1520,383 @@ onUnmounted(() => {
 
 @keyframes dvSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-/* ---------- Cetak ---------- */
-.print-only { display: none; }
+/* ============ GAYA KHUSUS LEMBAR CETAK (PRINT VIEW) ============ */
+.print-only {
+  display: none !important;
+}
 
 @media print {
-  @page {
-    size: A4 landscape;
-    margin: 4mm 6mm;
-  }
-
-  html, body {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    overflow: hidden !important;
-    background: #fff !important;
-    font-size: 7.2pt !important;
-    line-height: 1.25 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .dv {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-height: 100% !important;
-  }
-
-  .no-print,
-  .dv-filter,
-  .modal-overlay,
-  .mobile-topbar,
-  .mobile-bottom-nav,
-  .desktop-navbar,
-  .dv-toggles {
-    display: none !important;
-  }
-
   .print-only {
     display: flex !important;
   }
 
-  .dv-print-head {
-    align-items: center;
-    gap: 0.5rem;
-    padding: 3px 8px;
-    margin-bottom: 3px;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    background: #f8fafc;
-    height: 28px;
-    box-sizing: border-box;
-  }
-  .dv-print-brand {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    background: #4338ca;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 8pt;
-  }
-  .dv-print-main {
-    flex: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-  .dv-print-main h2 {
-    margin: 0;
-    font-size: 8.5pt;
-    font-weight: 800;
-    color: #0f172a;
-    white-space: nowrap;
-  }
-  .dv-print-meta {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 6.8pt;
-    color: #475569;
-  }
-  .dv-print-user {
-    text-align: right;
-    font-size: 6.5pt;
-    color: #475569;
-    white-space: nowrap;
-    line-height: 1.2;
+  .dv-print-sheet {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 198mm !important;
+    max-height: 198mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #ffffff !important;
   }
 
-  .dv-report-sheet {
+  /* Header cetak */
+  .dv-p-head {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 3px 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    background: #f8fafc !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    flex: none !important;
+  }
+  .dv-p-brand {
+    width: 22px !important;
+    height: 22px !important;
+    background: #4338ca !important;
+    color: #fff !important;
+    border-radius: 4px !important;
+    font-weight: 800 !important;
+    font-size: 7.5pt !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .dv-p-title-wrap {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+  }
+  .dv-p-title-wrap h2 {
+    margin: 0 !important;
+    font-size: 8.5pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+  }
+  .dv-p-meta {
+    font-size: 6.5pt !important;
+    color: #475569 !important;
+    white-space: nowrap !important;
+  }
+  .dv-p-user {
+    text-align: right !important;
+    font-size: 6pt !important;
+    color: #475569 !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Strip KPI */
+  .dv-p-kpi-strip {
+    display: grid !important;
+    grid-template-columns: 1.2fr repeat(7, 1fr) !important;
+    gap: 3px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    padding: 2px 4px !important;
+    box-sizing: border-box !important;
+    height: 36px !important;
+    flex: none !important;
+  }
+  .dv-p-kpi-item {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 0 4px !important;
+  }
+  .dv-p-kpi-item + .dv-p-kpi-item {
+    border-left: 1px solid #e2e8f0 !important;
+  }
+  .dv-p-kpi-item .lbl {
+    font-size: 5.2pt !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1 !important;
+  }
+  .dv-p-kpi-item .val {
+    font-size: 8.8pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.15 !important;
+  }
+  .dv-p-kpi-item .sub {
+    font-size: 5.5pt !important;
+    color: #64748b !important;
+    line-height: 1 !important;
+  }
+  .dv-p-kpi-item.highlight {
+    background: #f1f5f9 !important;
+    border-radius: 3px !important;
+  }
+
+  /* 3 Grafik Sejajar */
+  .dv-p-charts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 5px !important;
+    height: 130px !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+  .dv-p-card {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    padding: 3px 5px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .dv-p-card-head {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    margin-bottom: 2px !important;
+    flex: none !important;
+  }
+  .dv-p-card-head b {
+    font-size: 6.8pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+  .dv-p-card-head span {
+    font-size: 6pt !important;
+    color: #64748b !important;
+  }
+  .dv-p-chart-body {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+  .dv-p-chart-img {
+    width: 100% !important;
+    height: 105px !important;
+    max-height: 105px !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+  .dv-p-no-chart {
+    font-size: 6.5pt !important;
+    color: #94a3b8 !important;
+  }
+
+  /* Baris Rincian Data (3 Kolom) */
+  .dv-p-details-grid {
+    display: grid !important;
+    grid-template-columns: 1.4fr 0.8fr 1fr !important;
+    gap: 5px !important;
+    height: 165px !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Tabel Alasan Downtime */
+  .dv-p-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 6.2pt !important;
+    line-height: 1.15 !important;
+  }
+  .dv-p-table thead {
+    display: table-row-group !important; /* CRITICAL: Prevents duplicate thead in Chrome */
+  }
+  .dv-p-table th {
+    background: #f1f5f9 !important;
+    text-align: left !important;
+    padding: 2px 4px !important;
+    font-size: 5.8pt !important;
+    text-transform: uppercase !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+  .dv-p-table td {
+    padding: 2px 4px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: top !important;
+  }
+  .dv-p-chips {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+  }
+  .dv-p-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 3px !important;
+    padding: 0 3px !important;
+    font-size: 5.8pt !important;
+    line-height: 1.2 !important;
+  }
+  .dv-p-chip small {
+    color: #64748b !important;
+  }
+
+  /* List 8 Waste */
+  .dv-p-waste-list {
     display: flex !important;
     flex-direction: column !important;
     gap: 3px !important;
-    height: 196mm !important;
-    max-height: 196mm !important;
-    overflow: hidden !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+    padding-top: 2px !important;
   }
-
-  /* Compact Hero in print */
-  .dv-hero {
+  .dv-p-waste-row {
     display: grid !important;
-    grid-template-columns: 180px 1fr !important;
-    gap: 6px !important;
-    margin-bottom: 0 !important;
-    padding: 0 !important;
-  }
-  .dv-oee {
-    padding: 4px 8px !important;
-    gap: 2px !important;
-    border-radius: 6px !important;
-  }
-  .dv-eyebrow {
-    font-size: 6pt !important;
-  }
-  .dv-oee-value {
-    font-size: 1.45rem !important;
-    line-height: 1 !important;
-  }
-  .dv-oee-value small {
-    font-size: 0.8rem !important;
-  }
-  .dv-track-lg {
-    height: 6px !important;
-    margin-top: 3px !important;
-  }
-  .dv-oee-foot {
-    font-size: 6.5pt !important;
-  }
-  .dv-pillars {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    padding: 0 !important;
-    border-radius: 6px !important;
-  }
-  .dv-pillar {
-    padding: 4px 8px !important;
-    gap: 2px !important;
-  }
-  .dv-pillar-val {
-    font-size: 1.05rem !important;
-  }
-  .dv-pillar-foot {
-    font-size: 6.2pt !important;
-  }
-
-  /* Compact Stats strip */
-  .dv-stats {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    margin-bottom: 0 !important;
-    border-radius: 6px !important;
-  }
-  .dv-stat {
-    padding: 3px 8px !important;
-    gap: 0 4px !important;
-  }
-  .dv-stat b {
-    font-size: 0.95rem !important;
-  }
-  .dv-stat small {
-    font-size: 6.5pt !important;
-  }
-
-  /* Compact 3 Charts in print */
-  .dv-charts-3col {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 6px !important;
-    margin-bottom: 0 !important;
-  }
-  .dv-card {
-    padding: 4px 6px !important;
-    border-radius: 6px !important;
-    box-shadow: none !important;
-  }
-  .dv-card-head {
-    margin-bottom: 2px !important;
+    grid-template-columns: 1fr 1fr 0.8fr !important;
+    align-items: center !important;
     gap: 4px !important;
-  }
-  .dv-card-head h3 {
-    font-size: 7.5pt !important;
-  }
-  .dv-card-head p {
     font-size: 6.2pt !important;
-    margin: 0 !important;
   }
-  .dv-card-foot {
-    display: none !important;
-  }
-  .dv-canvas {
-    height: 105px !important;
-    max-height: 105px !important;
-  }
-  .dv-pill {
-    font-size: 6pt !important;
-    padding: 1px 5px !important;
-  }
-
-  /* Details row in print */
-  .dv-details-grid {
-    display: grid !important;
-    grid-template-columns: 1.4fr 0.85fr 0.95fr !important;
-    gap: 6px !important;
-    margin-bottom: 0 !important;
-    flex: 1 !important;
+  .dv-p-waste-row .w-name {
+    font-weight: 700 !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
-  .dv-reasons-table-wrap {
-    max-height: none !important;
-    overflow: hidden !important;
-  }
-  .dv-reasons-table {
-    font-size: 6.5pt !important;
-  }
-  .dv-reasons-table th, .dv-reasons-table td {
-    padding: 2px 4px !important;
-  }
-  .dv-reason-chip {
-    padding: 0 3px !important;
-    font-size: 6.2pt !important;
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-  }
-  
-  .dv-waste {
-    gap: 3px !important;
-    padding-top: 0 !important;
-  }
-  .dv-waste-row {
-    gap: 4px !important;
-    grid-template-columns: 1.1fr 1fr 0.9fr !important;
-  }
-  .dv-waste-name {
-    font-size: 6.5pt !important;
-  }
-  .dv-waste-num {
-    font-size: 6.5pt !important;
-  }
-  .dv-track {
+  .dv-p-waste-row .w-bar-wrap {
     height: 5px !important;
+    background: #e2e8f0 !important;
+    border-radius: 99px !important;
+    overflow: hidden !important;
+  }
+  .dv-p-waste-row .w-bar {
+    height: 100% !important;
+    background: #4f46e5 !important;
+    border-radius: 99px !important;
+  }
+  .dv-p-waste-row .w-num {
+    text-align: right !important;
+    white-space: nowrap !important;
   }
 
-  .dv-insight-list {
+  /* List Insight */
+  .dv-p-insight-list {
+    display: flex !important;
+    flex-direction: column !important;
     gap: 3px !important;
+    padding-top: 2px !important;
   }
-  .dv-insight-item {
-    padding: 2px 4px !important;
+  .dv-p-insight-item {
+    display: flex !important;
     gap: 4px !important;
-    border-radius: 4px !important;
-  }
-  .dv-insight-no {
-    width: 14px !important;
-    height: 14px !important;
-    font-size: 6pt !important;
-  }
-  .dv-insight-item b {
-    font-size: 6.8pt !important;
-  }
-  .dv-insight-item p {
+    padding: 2px 4px !important;
+    background: #f8fafc !important;
+    border-radius: 3px !important;
+    border-left: 3px solid #94a3b8 !important;
     font-size: 6.2pt !important;
-    margin: 0 !important;
-    line-height: 1.2 !important;
+  }
+  .dv-p-insight-item.tone-ok { border-left-color: #10b981 !important; }
+  .dv-p-insight-item.tone-warn { border-left-color: #d97706 !important; }
+  .dv-p-insight-item.tone-bad { border-left-color: #e11d48 !important; }
+  .dv-p-insight-item .no {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    border: 1px solid #cbd5e1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 5.5pt !important;
+    font-weight: 800 !important;
+    flex: none !important;
+  }
+  .dv-p-insight-item .body b {
+    display: block !important;
+    font-size: 6.2pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+  .dv-p-insight-item .body p {
+    margin: 1px 0 0 !important;
+    font-size: 5.8pt !important;
+    line-height: 1.15 !important;
+    color: #334155 !important;
   }
 
-  /* Print footer */
-  .dv-print-foot {
+  /* Footer Cetak */
+  .dv-p-foot {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     padding: 2px 6px !important;
-    font-size: 6pt !important;
+    font-size: 5.5pt !important;
     color: #64748b !important;
     border-top: 1px solid #e2e8f0 !important;
     height: 14px !important;
     box-sizing: border-box !important;
+    flex: none !important;
   }
 
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+}
+</style>
+
+<!-- Global print style overrides -->
+<style>
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 4mm 5mm;
+  }
+  html, body {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    font-size: 7pt !important;
+  }
+  .app-header,
+  header,
+  nav,
+  .desktop-navbar,
+  .mobile-topbar,
+  .mobile-bottom-nav,
+  .no-print,
+  .dv-filter,
+  .dv-screen-view,
+  .modal-overlay {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: static !important;
+    overflow: hidden !important;
+  }
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
   }
 }
 </style>

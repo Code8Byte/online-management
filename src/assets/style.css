@@ -827,10 +827,27 @@ tbody tr:hover {
 
 /* Print */
 @media print {
-  .no-print, .mobile-topbar, .mobile-bottom-nav, .desktop-navbar { display: none !important; }
+  .no-print,
+  .app-header,
+  header,
+  nav,
+  .desktop-navbar,
+  .mobile-topbar,
+  .mobile-bottom-nav {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    position: static !important;
+    overflow: hidden !important;
+  }
   .card { border: none; box-shadow: none; padding: 0; }
-  body { background: white; font-size: 11pt; }
-  .container { max-width: 100%; padding: 0; }
+  body { background: white; margin: 0; padding: 0; }
+  .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
 }
 
 /* ==========================================================================
