@@ -173,6 +173,17 @@
               </td>
               <td class="text-center text-nowrap">
                 <div class="d-flex justify-center align-center gap-03 flex-wrap">
+                  <!-- Tombol Edit Nama (Sinkronisasi Data LKH) -->
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    @click="openModalEditName(u)"
+                    title="Edit nama akun & sinkronkan seluruh data riwayat LKH"
+                    style="padding: 0.28rem 0.6rem; font-size: 0.78rem;"
+                  >
+                    ✎ Edit Nama
+                  </button>
+
                   <!-- Tombol Eskalasi / Perubahan Tingkat -->
                   <button
                     type="button"
@@ -479,6 +490,74 @@
       </div>
     </div>
 
+    <!-- ==================== MODAL 4: EDIT NAMA AKUN & SINKRONISASI DATA LKH ==================== -->
+    <div v-if="showModalEditName" class="modal-overlay" @click.self="showModalEditName = false">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="d-flex justify-between align-center mb-1 pb-05 border-bottom">
+          <h3 style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+            <span>✎</span> Edit Nama Akun Pengguna
+          </h3>
+          <button type="button" class="btn btn-sm btn-secondary" @click="showModalEditName = false" style="padding: 0.2rem 0.5rem;">✕</button>
+        </div>
+
+        <div class="mb-1 p-08 bg-soft rounded">
+          <div class="d-flex justify-between align-center">
+            <div>
+              <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem; font-weight: 700;">Nama Akun Saat Ini</small>
+              <b style="font-size: 1.1rem; color: #0f172a;">{{ targetUser?.username }}</b>
+            </div>
+            <div class="text-right">
+              <span class="badge" :class="getRoleBadgeClass(targetUser?.role)" style="font-size: 0.72rem; text-transform: uppercase;">
+                {{ targetUser?.role }}
+              </span>
+              <div v-if="Number(targetUser?.total_lkh) > 0" class="mt-02 text-muted" style="font-size: 0.76rem;">
+                {{ targetUser?.total_lkh }} riwayat LKH
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Box Sinkronisasi Otomatis Seluruh Data LKH -->
+        <div class="p-08 rounded mb-1" style="background: #eef2ff; border: 1px solid #c7d2fe; color: #3730a3; font-size: 0.84rem; line-height: 1.45;">
+          <div class="d-flex align-center gap-05 mb-02" style="font-weight: 700;">
+            <span>🔄</span> Sinkronisasi Riwayat Otomatis
+          </div>
+          <p style="margin: 0;">
+            Ketika nama akun diubah (contoh: dari <b>{{ targetUser?.username }}</b> ke nama baru), seluruh data LKH yang pernah diisi oleh akun ini (kolom <b>PIC</b> dan <b>Operator</b>) serta log audit akan otomatis diperbarui mengikuti nama baru tersebut.
+          </p>
+        </div>
+
+        <form @submit.prevent="submitEditName">
+          <div class="form-group mb-1">
+            <label style="font-weight: 600;">Nama / Username Baru <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              v-model="editNameForm.username"
+              class="form-control"
+              required
+              minlength="3"
+              maxlength="50"
+              placeholder="Masukkan nama akun baru..."
+            />
+            <small class="text-muted">Gunakan huruf, angka, atau spasi (minimal 3 karakter).</small>
+          </div>
+
+          <div class="d-flex justify-between align-center gap-05 pt-1 border-top">
+            <button type="button" class="btn btn-secondary" @click="showModalEditName = false" :disabled="submitting">
+              Batal
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="submitting || !editNameForm.username.trim() || editNameForm.username.trim() === targetUser?.username"
+            >
+              {{ submitting ? 'Menyinkronkan Data...' : '💾 Simpan & Perbarui Semua Data' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -498,6 +577,8 @@ const successMsg = ref('')
 const errorMsg = ref('')
 
 // Modal state
+const showModalEditName = ref(false)
+const editNameForm = ref({ username: '' })
 const showModalEscalate = ref(false)
 const showModalCreate = ref(false)
 const showModalReset = ref(false)
@@ -579,6 +660,54 @@ const fetchUsers = async () => {
     errorMsg.value = err.message || 'Gagal memuat data akun.'
   } finally {
     loading.value = false
+  }
+}
+
+// 0. Edit Nama Akun & Sinkronkan Data LKH
+const openModalEditName = (user) => {
+  targetUser.value = user
+  editNameForm.value.username = user.username
+  showModalEditName.value = true
+}
+
+const submitEditName = async () => {
+  if (!targetUser.value) return
+  const newName = editNameForm.value.username.trim()
+  if (!newName) {
+    errorMsg.value = 'Nama akun baru tidak boleh kosong.'
+    return
+  }
+  if (newName === targetUser.value.username) {
+    showModalEditName.value = false
+    return
+  }
+
+  submitting.value = true
+  errorMsg.value = ''
+  successMsg.value = ''
+
+  try {
+    const res = await apiFetch('users.php?action=update_name', {
+      method: 'POST',
+      body: JSON.stringify({
+        id: targetUser.value.id,
+        username: newName
+      })
+    })
+
+    successMsg.value = res.message || `Nama akun '${targetUser.value.username}' berhasil diubah menjadi '${newName}'. Seluruh riwayat LKH telah disinkronkan.`
+    
+    // Jika admin mengubah nama akunnya sendiri yang sedang aktif, update authState lokal
+    if (isSelf(targetUser.value)) {
+      authState.value.username = newName
+    }
+
+    showModalEditName.value = false
+    await fetchUsers()
+  } catch (err) {
+    errorMsg.value = err.message || 'Gagal mengubah nama akun.'
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -881,5 +1010,15 @@ onMounted(() => {
   font-size: 1rem;
   color: var(--text-muted);
   padding: 4px;
+}
+
+.btn-outline-primary {
+  background: #fff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+.btn-outline-primary:hover {
+  background: #eef2ff;
+  border-color: #4f46e5;
 }
 </style>

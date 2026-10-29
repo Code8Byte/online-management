@@ -113,7 +113,102 @@ if ($method === 'POST' && $action === 'create') {
     ]);
 }
 
-// 3. POST: Eskalasi / Perubahan Tingkat Hak Akses (Role)
+// 3. POST: Edit Nama / Username Pengguna & Sinkronkan Seluruh Data LKH
+if ($method === 'POST' && ($action === 'update_name' || $action === 'update_username')) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $id = (int)($data['id'] ?? 0);
+    $newUsername = trim($data['username'] ?? '');
+
+    if ($id <= 0) {
+        jsonResponse(['error' => 'ID akun pengguna tidak valid.'], 400);
+    }
+    if (empty($newUsername)) {
+        jsonResponse(['error' => 'Nama pengguna baru wajib diisi.'], 400);
+    }
+    if (strlen($newUsername) < 3 || strlen($newUsername) > 50) {
+        jsonResponse(['error' => 'Nama pengguna harus antara 3 sampai 50 karakter.'], 400);
+    }
+
+    $stmt = $pdo->prepare("SELECT id, username, role FROM users WHERE id = ?");
+    $stmt->execute([$id]);
+    $target = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$target) {
+        jsonResponse(['error' => 'Akun pengguna tidak ditemukan.'], 404);
+    }
+
+    $oldUsername = $target['username'];
+
+    if ($oldUsername === $newUsername) {
+        jsonResponse([
+            'success' => true,
+            'message' => "Nama akun tidak berubah ('{$newUsername}').",
+            'username' => $newUsername,
+            'affected_lkh' => 0
+        ]);
+    }
+
+    // Cek apakah username baru sudah digunakan oleh akun lain
+    $stmtCheck = $pdo->prepare("SELECT id FROM users WHERE LOWER(username) = LOWER(?) AND id != ?");
+    $stmtCheck->execute([$newUsername, $id]);
+    if ($stmtCheck->fetch()) {
+        jsonResponse(['error' => "Nama / username '{$newUsername}' sudah digunakan oleh akun lain. Silakan pilih nama lain."], 400);
+    }
+
+    $pdo->beginTransaction();
+    try {
+        // 1. Update nama di tabel users
+        $stmtUpUser = $pdo->prepare("UPDATE users SET username = ? WHERE id = ?");
+        $stmtUpUser->execute([$newUsername, $id]);
+
+        // 2. Hitung jumlah data LKH yang akan diperbarui (berdasarkan pic atau operator)
+        $stmtCountLkh = $pdo->prepare("
+            SELECT COUNT(*) FROM lkh 
+            WHERE pic = ? OR operator = ? OR LOWER(TRIM(pic)) = LOWER(?) OR LOWER(TRIM(operator)) = LOWER(?)
+        ");
+        $stmtCountLkh->execute([$oldUsername, $oldUsername, $oldUsername, $oldUsername]);
+        $affectedLkh = (int)$stmtCountLkh->fetchColumn();
+
+        // 3. Update pic di tabel lkh
+        $stmtUpPic = $pdo->prepare("UPDATE lkh SET pic = ? WHERE pic = ? OR LOWER(TRIM(pic)) = LOWER(?)");
+        $stmtUpPic->execute([$newUsername, $oldUsername, $oldUsername]);
+
+        // 4. Update operator di tabel lkh
+        $stmtUpOp = $pdo->prepare("UPDATE lkh SET operator = ? WHERE operator = ? OR LOWER(TRIM(operator)) = LOWER(?)");
+        $stmtUpOp->execute([$newUsername, $oldUsername, $oldUsername]);
+
+        // 5. Update di tabel activity_log
+        $stmtUpLogs = $pdo->prepare("UPDATE activity_log SET username = ? WHERE username = ? OR user_id = ?");
+        $stmtUpLogs->execute([$newUsername, $oldUsername, $id]);
+
+        // 6. Jika akun yang diedit adalah akun yang sedang login saat ini, perbarui session aktif
+        if ((int)$_SESSION['user_id'] === $id) {
+            $_SESSION['username'] = $newUsername;
+        }
+
+        $pdo->commit();
+
+        logActivity(
+            $pdo, 
+            'UPDATE_USERNAME', 
+            "Admin '{$_SESSION['username']}' mengubah nama akun #{$id} dari '{$oldUsername}' menjadi '{$newUsername}'. {$affectedLkh} riwayat LKH otomatis disinkronkan."
+        );
+
+        jsonResponse([
+            'success' => true,
+            'message' => "Nama akun berhasil diubah dari '{$oldUsername}' menjadi '{$newUsername}'. {$affectedLkh} data LKH otomatis diperbarui mengikuti nama baru.",
+            'username' => $newUsername,
+            'affected_lkh' => $affectedLkh
+        ]);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        jsonResponse(['error' => 'Gagal mengubah nama akun: ' . $e->getMessage()], 500);
+    }
+}
+
+// 4. POST: Eskalasi / Perubahan Tingkat Hak Akses (Role)
 if ($method === 'POST' && $action === 'update_role') {
     $data = json_decode(file_get_contents('php://input'), true);
     $id = (int)($data['id'] ?? 0);
