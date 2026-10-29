@@ -299,10 +299,30 @@ switch ($action) {
         break;
     case 'end_pp':
         if ($method === 'POST') {
+            if (($_SESSION['role'] ?? '') !== 'admin') {
+                jsonResponse(['error' => 'Akses ditolak. Hanya Admin yang dapat menutup Job Order (End PP).'], 403);
+            }
             $data = json_decode(file_get_contents('php://input'), true);
-            if (isset($data['id'])) {
-                $pdo->prepare("UPDATE pp SET status = 'selesai' WHERE id = ?")->execute([$data['id']]);
-                jsonResponse(['success' => true]);
+            $ppId = (int)($data['id'] ?? 0);
+            if ($ppId > 0) {
+                $stmt = $pdo->prepare("SELECT pp.no_pp, p.nama AS produk_nama FROM pp JOIN produk p ON pp.produk_id = p.id WHERE pp.id = ?");
+                $stmt->execute([$ppId]);
+                $currPp = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                $pdo->prepare("UPDATE pp SET status = 'selesai' WHERE id = ?")->execute([$ppId]);
+
+                $curUser = $_SESSION['username'] ?? 'Admin';
+                $noPpStr = $currPp ? "{$currPp['no_pp']} ({$currPp['produk_nama']})" : "ID {$ppId}";
+                logActivity($pdo, 'END_PP', "Admin '{$curUser}' menutup Job Order (End Job Order): {$noPpStr} [Status -> selesai]");
+
+                $cacheFiles = glob(__DIR__ . '/cache/dashboard_*.json');
+                if ($cacheFiles) {
+                    foreach ($cacheFiles as $cf) @unlink($cf);
+                }
+
+                jsonResponse(['success' => true, 'message' => "Job Order {$noPpStr} berhasil ditutup (selesai)."]);
+            } else {
+                jsonResponse(['error' => 'ID Job Order tidak valid.'], 400);
             }
         }
         break;
