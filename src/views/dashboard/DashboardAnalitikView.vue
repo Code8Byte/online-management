@@ -12,7 +12,7 @@
             <button type="button" :class="{ on: activePreset === 'month' }" @click="applyPreset('month')">Bulan ini</button>
           </div>
 
-          <!-- Desktop: tanggal + shift -->
+          <!-- Desktop: tanggal + shift + mesin -->
           <div class="dv-inline-fields desktop-only">
             <input type="date" v-model="filter.start_date" class="dv-input" @change="activePreset = null" />
             <span class="dv-sep">&ndash;</span>
@@ -22,6 +22,10 @@
               <option value="1">Shift 1</option>
               <option value="2">Shift 2</option>
               <option value="3">Shift 3</option>
+            </select>
+            <select v-model="filter.mesin_id" class="dv-input">
+              <option value="">Semua mesin</option>
+              <option v-for="m in master.mesin" :key="m.id" :value="m.id">{{ m.nama }}</option>
             </select>
             <button type="button" class="dv-btn dv-btn-ghost" @click="showAdvanced = !showAdvanced">
               Lainnya
@@ -121,6 +125,7 @@
         <!-- Chip filter aktif -->
         <div v-if="activeFilterCount" class="dv-chips desktop-only">
           <span v-if="filter.shift" class="dv-chip">Shift {{ filter.shift }} <b @click="filter.shift=''; loadDashboard()">✕</b></span>
+          <span v-if="filter.mesin_id" class="dv-chip">Mesin: {{ getMesinName(filter.mesin_id) }} <b @click="filter.mesin_id=''; loadDashboard()">✕</b></span>
           <span v-if="filter.tahap_sortir" class="dv-chip">Tahap {{ filter.tahap_sortir }} <b @click="filter.tahap_sortir=''; loadDashboard()">✕</b></span>
           <span v-if="filter.no_pp" class="dv-chip">PP {{ filter.no_pp }} <b @click="filter.no_pp=''; loadDashboard()">✕</b></span>
           <span v-for="pid in filter.produk_ids" :key="pid" class="dv-chip">{{ getProdukName(pid) }} <b @click="removeProduk(pid); loadDashboard()">✕</b></span>
@@ -301,6 +306,7 @@
           <div class="dv-p-meta">
             <span>Periode: <b>{{ filter.start_date || 'Awal' }} s/d {{ filter.end_date || 'Akhir' }}</b></span>
             <span v-if="filter.shift">&middot; Shift: <b>{{ filter.shift }}</b></span>
+            <span v-if="filter.mesin_id">&middot; Mesin: <b>{{ getMesinName(filter.mesin_id) }}</b></span>
             <span v-if="filter.tahap_sortir">&middot; Tahap: <b>{{ filter.tahap_sortir }}</b></span>
             <span v-if="filter.no_pp">&middot; PP: <b>{{ filter.no_pp }}</b></span>
             <span v-if="filter.produk_ids.length">&middot; Produk: <b>{{ filter.produk_ids.length }} item</b></span>
@@ -549,6 +555,13 @@
             </select>
           </div>
           <div class="dv-field">
+            <label>Mesin</label>
+            <select v-model="filter.mesin_id" class="dv-input">
+              <option value="">Semua mesin</option>
+              <option v-for="m in master.mesin" :key="m.id" :value="m.id">{{ m.nama }}</option>
+            </select>
+          </div>
+          <div class="dv-field">
             <label>Tahap sortir</label>
             <select v-model="filter.tahap_sortir" class="dv-input">
               <option value="">Semua tahap</option>
@@ -672,7 +685,7 @@ const getLocalDate = () => toLocalDate(new Date())
 const fmt = (n) => (Number(n) || 0).toLocaleString('id-ID')
 
 /* ---------- State ---------- */
-const filter = ref({ start_date: '', end_date: '', shift: '', tahap_sortir: '', no_pp: '', produk_ids: [] })
+const filter = ref({ start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '', produk_ids: [] })
 const activePreset = ref(7)
 const showAdvanced = ref(false)
 
@@ -932,6 +945,11 @@ const getProdukName = (id) => {
   return p ? p.nama : `ID ${id}`
 }
 
+const getMesinName = (id) => {
+  const m = (master.value.mesin || []).find(x => Number(x.id) === Number(id))
+  return m ? m.nama : `Mesin #${id}`
+}
+
 const toggleProduk = (id) => {
   const n = Number(id)
   const idx = filter.value.produk_ids.indexOf(n)
@@ -945,6 +963,7 @@ const removeProduk = (id) => { filter.value.produk_ids = filter.value.produk_ids
 const activeFilterCount = computed(() => {
   let c = 0
   if (filter.value.shift) c++
+  if (filter.value.mesin_id) c++
   if (filter.value.tahap_sortir) c++
   if (filter.value.no_pp) c++
   c += (filter.value.produk_ids || []).length
@@ -1174,7 +1193,7 @@ const printDashboard = async () => {
 }
 
 const resetFilter = () => {
-  filter.value = { start_date: '', end_date: '', shift: '', tahap_sortir: '', no_pp: '', produk_ids: [] }
+  filter.value = { start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '', produk_ids: [] }
   applyPreset(7)
 }
 
@@ -1185,6 +1204,7 @@ const loadDashboard = async () => {
   if (f.start_date) q.append('start_date', f.start_date)
   if (f.end_date) q.append('end_date', f.end_date)
   if (f.shift) q.append('shift', f.shift)
+  if (f.mesin_id) q.append('mesin_id', f.mesin_id)
   if (f.tahap_sortir) q.append('tahap_sortir', f.tahap_sortir)
   if (f.no_pp) q.append('no_pp', f.no_pp)
   if (f.produk_ids && f.produk_ids.length) q.append('produk_ids', f.produk_ids.join(','))
