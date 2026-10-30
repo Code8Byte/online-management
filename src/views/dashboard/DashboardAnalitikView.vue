@@ -96,27 +96,6 @@
               <option v-for="pp in master.pp" :key="pp.id" :value="pp.no_pp">{{ pp.no_pp }} - {{ pp.produk_nama }}</option>
             </datalist>
           </div>
-          <div class="dv-field dv-multi" ref="produkDropdownRef">
-            <label>Produk</label>
-            <div class="dv-input dv-multi-btn" @click="showProdukDropdown = !showProdukDropdown">
-              <span class="dv-ellipsis">{{ getProdukFilterLabel }}</span>
-              <span class="dv-caret">{{ showProdukDropdown ? '▲' : '▼' }}</span>
-            </div>
-            <div v-if="showProdukDropdown" class="dv-pop">
-              <input type="text" v-model="searchProduk" class="dv-input" placeholder="Cari produk..." @click.stop />
-              <div class="dv-pop-actions">
-                <button type="button" class="dv-link" @click.stop="selectAllProduk">Pilih semua</button>
-                <button type="button" class="dv-link" @click.stop="clearAllProduk">Reset</button>
-                <span class="dv-muted">{{ filter.produk_ids.length }}/{{ master.produk.length }}</span>
-              </div>
-              <div class="dv-pop-list">
-                <label v-for="pr in filteredProdukList" :key="pr.id" class="dv-pop-item" @click.stop>
-                  <input type="checkbox" :checked="filter.produk_ids.includes(Number(pr.id))" @change="toggleProduk(pr.id)" />
-                  <span>{{ pr.nama }} <small class="dv-muted">{{ pr.famili || '' }}</small></span>
-                </label>
-              </div>
-            </div>
-          </div>
           <div class="dv-field dv-field-end">
             <button type="button" class="dv-btn dv-btn-ghost" @click="resetFilter">Reset semua</button>
           </div>
@@ -128,7 +107,6 @@
           <span v-if="filter.mesin_id" class="dv-chip">Mesin: {{ getMesinName(filter.mesin_id) }} <b @click="filter.mesin_id=''; loadDashboard()">✕</b></span>
           <span v-if="filter.tahap_sortir" class="dv-chip">Tahap {{ filter.tahap_sortir }} <b @click="filter.tahap_sortir=''; loadDashboard()">✕</b></span>
           <span v-if="filter.no_pp" class="dv-chip">PP {{ filter.no_pp }} <b @click="filter.no_pp=''; loadDashboard()">✕</b></span>
-          <span v-for="pid in filter.produk_ids" :key="pid" class="dv-chip">{{ getProdukName(pid) }} <b @click="removeProduk(pid); loadDashboard()">✕</b></span>
         </div>
       </div>
     </div>
@@ -309,7 +287,6 @@
             <span v-if="filter.mesin_id">&middot; Mesin: <b>{{ getMesinName(filter.mesin_id) }}</b></span>
             <span v-if="filter.tahap_sortir">&middot; Tahap: <b>{{ filter.tahap_sortir }}</b></span>
             <span v-if="filter.no_pp">&middot; PP: <b>{{ filter.no_pp }}</b></span>
-            <span v-if="filter.produk_ids.length">&middot; Produk: <b>{{ filter.produk_ids.length }} item</b></span>
           </div>
         </div>
         <div class="dv-p-user">
@@ -685,7 +662,7 @@ const getLocalDate = () => toLocalDate(new Date())
 const fmt = (n) => (Number(n) || 0).toLocaleString('id-ID')
 
 /* ---------- State ---------- */
-const filter = ref({ start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '', produk_ids: [] })
+const filter = ref({ start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '' })
 const activePreset = ref(7)
 const showAdvanced = ref(false)
 
@@ -891,9 +868,6 @@ const captureChartImages = () => {
   }
 }
 
-const showProdukDropdown = ref(false)
-const searchProduk = ref('')
-const produkDropdownRef = ref(null)
 const showExportDropdown = ref(false)
 const exportDropdownRef = ref(null)
 const showMobileFilterSheet = ref(false)
@@ -903,18 +877,16 @@ const showDrilldownModal = ref(false)
 const selectedDrilldownItem = ref(null)
 const searchDrilldownQuery = ref('')
 
-const formExport = ref({ start_date: '', end_date: '', shift: '', tahap_sortir: '', produk_ids: [] })
+const formExport = ref({ start_date: '', end_date: '', shift: '', tahap_sortir: '', mesin_id: '' })
 const formCC = ref({ tanggal: getLocalDate(), shift: '1' })
 
 /* ---------- Event global ---------- */
 const handleOutsideClick = (e) => {
-  if (produkDropdownRef.value && !produkDropdownRef.value.contains(e.target)) showProdukDropdown.value = false
   if (exportDropdownRef.value && !exportDropdownRef.value.contains(e.target)) showExportDropdown.value = false
 }
 const handleKeyDown = (e) => {
   if (e.key === 'Escape') {
     showExportDropdown.value = false
-    showProdukDropdown.value = false
     showDrilldownModal.value = false
     showMobileFilterSheet.value = false
     showModalExportExcel.value = false
@@ -922,43 +894,10 @@ const handleKeyDown = (e) => {
   }
 }
 
-/* ---------- Filter produk ---------- */
-const filteredProdukList = computed(() => {
-  const list = master.value.produk || []
-  if (!searchProduk.value) return list
-  const q = searchProduk.value.toLowerCase()
-  return list.filter(p => (p.nama && p.nama.toLowerCase().includes(q)) || (p.famili && p.famili.toLowerCase().includes(q)))
-})
-
-const getProdukFilterLabel = computed(() => {
-  const sel = filter.value.produk_ids || []
-  if (!sel.length) return 'Semua produk'
-  if (sel.length === 1) {
-    const p = (master.value.produk || []).find(x => Number(x.id) === Number(sel[0]))
-    return p ? p.nama : '1 produk'
-  }
-  return `${sel.length} produk`
-})
-
-const getProdukName = (id) => {
-  const p = (master.value.produk || []).find(x => Number(x.id) === Number(id))
-  return p ? p.nama : `ID ${id}`
-}
-
 const getMesinName = (id) => {
   const m = (master.value.mesin || []).find(x => Number(x.id) === Number(id))
   return m ? m.nama : `Mesin #${id}`
 }
-
-const toggleProduk = (id) => {
-  const n = Number(id)
-  const idx = filter.value.produk_ids.indexOf(n)
-  if (idx > -1) filter.value.produk_ids.splice(idx, 1)
-  else filter.value.produk_ids.push(n)
-}
-const selectAllProduk = () => { filter.value.produk_ids = (master.value.produk || []).map(p => Number(p.id)) }
-const clearAllProduk = () => { filter.value.produk_ids = [] }
-const removeProduk = (id) => { filter.value.produk_ids = filter.value.produk_ids.filter(x => x !== Number(id)) }
 
 const activeFilterCount = computed(() => {
   let c = 0
@@ -966,14 +905,12 @@ const activeFilterCount = computed(() => {
   if (filter.value.mesin_id) c++
   if (filter.value.tahap_sortir) c++
   if (filter.value.no_pp) c++
-  c += (filter.value.produk_ids || []).length
   return c
 })
 const advancedCount = computed(() => {
   let c = 0
   if (filter.value.tahap_sortir) c++
   if (filter.value.no_pp) c++
-  c += (filter.value.produk_ids || []).length ? 1 : 0
   return c
 })
 
@@ -1140,7 +1077,7 @@ const openModalExportExcel = () => {
     end_date: filter.value.end_date || today,
     shift: filter.value.shift || '',
     tahap_sortir: filter.value.tahap_sortir || '',
-    produk_ids: [...(filter.value.produk_ids || [])]
+    mesin_id: filter.value.mesin_id || ''
   }
   showModalExportExcel.value = true
 }
@@ -1151,8 +1088,8 @@ const submitExportExcel = (format = 'xlsx') => {
   if (f.start_date) q.append('start_date', f.start_date)
   if (f.end_date) q.append('end_date', f.end_date)
   if (f.shift) q.append('shift', f.shift)
+  if (f.mesin_id) q.append('mesin_id', f.mesin_id)
   if (f.tahap_sortir) q.append('tahap_sortir', f.tahap_sortir)
-  if (f.produk_ids && f.produk_ids.length) q.append('produk_ids', f.produk_ids.join(','))
   if (format === 'csv') q.append('format', 'csv')
   window.open(`/api/export.php?${q.toString()}`, '_blank')
   showModalExportExcel.value = false
@@ -1168,7 +1105,6 @@ const submitExportCC = (format = 'xlsx') => {
   const q = new URLSearchParams()
   if (formCC.value.tanggal) q.append('tanggal', formCC.value.tanggal)
   if (formCC.value.shift) q.append('shift', formCC.value.shift)
-  if (filter.value.produk_ids && filter.value.produk_ids.length) q.append('produk_ids', filter.value.produk_ids.join(','))
   if (format === 'xlsx') q.append('format', 'xlsx')
   window.open(`/api/export_cc.php?${q.toString()}`, '_blank')
   showModalCC.value = false
@@ -1193,7 +1129,7 @@ const printDashboard = async () => {
 }
 
 const resetFilter = () => {
-  filter.value = { start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '', produk_ids: [] }
+  filter.value = { start_date: '', end_date: '', shift: '', mesin_id: '', tahap_sortir: '', no_pp: '' }
   applyPreset(7)
 }
 
@@ -1207,7 +1143,6 @@ const loadDashboard = async () => {
   if (f.mesin_id) q.append('mesin_id', f.mesin_id)
   if (f.tahap_sortir) q.append('tahap_sortir', f.tahap_sortir)
   if (f.no_pp) q.append('no_pp', f.no_pp)
-  if (f.produk_ids && f.produk_ids.length) q.append('produk_ids', f.produk_ids.join(','))
 
   data.value = await apiFetch(`dashboard.php?${q.toString()}`)
   await nextTick()
