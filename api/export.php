@@ -283,17 +283,51 @@ if ($format === 'csv') {
         $good = (int)($row['good'] ?? 0);
         $reject = (int)($row['reject'] ?? 0);
         $setup = (int)($row['setup_reject'] ?? 0);
+        $stdJph = (float)($row['std_jph'] ?? 0);
+        if ($totalProses <= 0 && ($good > 0 || $reject > 0 || $setup > 0)) {
+            $totalProses = $good + $reject + $setup;
+        }
+
+        $isPending = (($row['pp_status'] ?? '') === 'req') || ($stdJph <= 0);
+
         $planShift = (int)($row['plan_shift'] ?? 0);
+        if (!$isPending && $stdJph > 0 && $jamJalan > 0 && $planShift <= 0) {
+            $planShift = (int)round($jamJalan * $stdJph);
+        }
 
         $avail = (float)($row['availability'] ?? 0);
-        $qualOee = (float)($row['quality_oee'] ?? 0);
-        $qualWip = (float)($row['quality_wip'] ?? 0);
-        $jph = (float)($row['actual_jph'] ?? 0);
+        if ($avail <= 0 && $waktuProd > 0) {
+            $avail = round(($jamJalan / $waktuProd) * 100, 2);
+        }
 
-        $isPending = (($row['pp_status'] ?? '') === 'req') || ((float)($row['std_jph'] ?? 0) <= 0);
+        $qualOee = (float)($row['quality_oee'] ?? 0);
+        if ($qualOee <= 0 && $totalProses > 0) {
+            $qualOee = round((($totalProses - $setup) / $totalProses) * 100, 2);
+        }
+
+        $qualWip = (float)($row['quality_wip'] ?? 0);
+        if ($qualWip <= 0 && $totalProses > 0) {
+            $qualWip = round(($good / $totalProses) * 100, 2);
+        }
+
+        $perf = (float)($row['performance'] ?? 0);
+        if (!$isPending && $perf <= 0 && $planShift > 0) {
+            $perf = round(($totalProses / $planShift) * 100, 2);
+        }
+
+        $jph = (float)($row['actual_jph'] ?? 0);
+        if ($jph <= 0 && $jamJalan > 0) {
+            $jph = round($totalProses / $jamJalan, 2);
+        }
+
+        $oee = (float)($row['oee'] ?? 0);
+        if (!$isPending && $oee <= 0 && $avail > 0 && $perf > 0 && $qualOee > 0) {
+            $oee = round(($avail * $perf * $qualOee) / 10000, 2);
+        }
+
         $planShiftDisplay = $isPending ? 'Pending' : $planShift;
-        $perfDisplay = $isPending ? 'Pending' : (float)($row['performance'] ?? 0);
-        $oeeDisplay = $isPending ? 'Pending' : (float)($row['oee'] ?? 0);
+        $perfDisplay = $isPending ? 'Pending' : $perf;
+        $oeeDisplay = $isPending ? 'Pending' : $oee;
 
         $tahap = !empty($row['tahap_sortir']) ? $row['tahap_sortir'] : 'S1';
         $line = [
@@ -550,12 +584,51 @@ foreach ($rows as $row) {
     $good = (int)($row['good'] ?? 0);
     $reject = (int)($row['reject'] ?? 0);
     $setup = (int)($row['setup_reject'] ?? 0);
+    $stdJph = (float)($row['std_jph'] ?? 0);
+    if ($totalProses <= 0 && ($good > 0 || $reject > 0 || $setup > 0)) {
+        $totalProses = $good + $reject + $setup;
+    }
+
+    $isPending = (($row['pp_status'] ?? '') === 'req') || ($stdJph <= 0);
+
     $planShift = (int)($row['plan_shift'] ?? 0);
+    if (!$isPending && $stdJph > 0 && $jamJalan > 0 && $planShift <= 0) {
+        $planShift = (int)round($jamJalan * $stdJph);
+    }
+
+    $availRaw = (float)($row['availability'] ?? 0);
+    if ($availRaw <= 0 && $waktuProd > 0) {
+        $availRaw = round(($jamJalan / $waktuProd) * 100, 2);
+    }
+
+    $qualOeeRaw = (float)($row['quality_oee'] ?? 0);
+    if ($qualOeeRaw <= 0 && $totalProses > 0) {
+        $qualOeeRaw = round((($totalProses - $setup) / $totalProses) * 100, 2);
+    }
+
+    $qualWipRaw = (float)($row['quality_wip'] ?? 0);
+    if ($qualWipRaw <= 0 && $totalProses > 0) {
+        $qualWipRaw = round(($good / $totalProses) * 100, 2);
+    }
+
+    $perfRaw = (float)($row['performance'] ?? 0);
+    if (!$isPending && $perfRaw <= 0 && $planShift > 0) {
+        $perfRaw = round(($totalProses / $planShift) * 100, 2);
+    }
+
+    $jph = (float)($row['actual_jph'] ?? 0);
+    if ($jph <= 0 && $jamJalan > 0) {
+        $jph = round($totalProses / $jamJalan, 2);
+    }
+
+    $oeeRaw = (float)($row['oee'] ?? 0);
+    if (!$isPending && $oeeRaw <= 0 && $availRaw > 0 && $perfRaw > 0 && $qualOeeRaw > 0) {
+        $oeeRaw = round(($availRaw * $perfRaw * $qualOeeRaw) / 10000, 2);
+    }
+
     $totalDt = (int)($row['total_dt_menit'] ?? 0);
     $setting = (int)($row['setting_menit'] ?? 0);
     $limaS = (int)($row['5s_menit'] ?? 0);
-
-    $isPending = (($row['pp_status'] ?? '') === 'req') || ((float)($row['std_jph'] ?? 0) <= 0);
 
     $sumGood += $good;
     $sumReject += $reject;
@@ -570,12 +643,11 @@ foreach ($rows as $row) {
     $sum5s += $limaS;
     $sumJamJalan += $jamJalan;
 
-    $avail = ((float)($row['availability'] ?? 0)) / 100;
-    $perf = ((float)($row['performance'] ?? 0)) / 100;
-    $qualOee = ((float)($row['quality_oee'] ?? 0)) / 100;
-    $qualWip = ((float)($row['quality_wip'] ?? 0)) / 100;
-    $oee = ((float)($row['oee'] ?? 0)) / 100;
-    $jph = (float)($row['actual_jph'] ?? 0);
+    $avail = $availRaw / 100;
+    $perf = $perfRaw / 100;
+    $qualOee = $qualOeeRaw / 100;
+    $qualWip = $qualWipRaw / 100;
+    $oee = $oeeRaw / 100;
 
     $tahap = !empty($row['tahap_sortir']) ? $row['tahap_sortir'] : 'S1';
 

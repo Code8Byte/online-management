@@ -131,12 +131,32 @@ if ($method === 'GET' && $action === 'list') {
             $row['oee'] = null;
         } else {
             $row['is_pending'] = false;
+            $waktuProd = (float)($row['waktu_prod_jam'] ?? 0);
+            $totProses = (int)($row['total_proses'] ?? 0);
+            $good = (int)($row['good'] ?? 0);
+            $setup = (int)($row['setup_reject'] ?? 0);
+
+            $avail = (float)($row['availability'] ?? 0);
+            if ($avail <= 0 && $waktuProd > 0) {
+                $avail = round(($jam_jalan / $waktuProd) * 100, 2);
+                $row['availability'] = $avail;
+            }
+
+            $qualOee = (float)($row['quality_oee'] ?? 0);
+            if ($qualOee <= 0 && $totProses > 0) {
+                $qualOee = round((($totProses - $setup) / $totProses) * 100, 2);
+                $row['quality_oee'] = $qualOee;
+            }
+
+            $qualWip = (float)($row['quality_wip'] ?? 0);
+            if ($qualWip <= 0 && $totProses > 0) {
+                $qualWip = round(($good / $totProses) * 100, 2);
+                $row['quality_wip'] = $qualWip;
+            }
+
             if ($std_jph > 0 && $jam_jalan > 0) {
                 $row['plan_shift'] = (int)round($jam_jalan * $std_jph);
-                $totProses = (int)($row['total_proses'] ?? 0);
                 $planShift = $row['plan_shift'];
-                $avail = (float)($row['availability'] ?? 0);
-                $qualOee = (float)($row['quality_oee'] ?? 0);
                 $perf = ($planShift > 0) ? round(($totProses / $planShift) * 100, 2) : 0;
                 $row['performance'] = $perf;
                 $row['oee'] = round(($avail * $perf * $qualOee) / 10000, 2);
