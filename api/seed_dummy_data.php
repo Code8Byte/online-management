@@ -76,6 +76,17 @@ try {
         }
     }
 
+    // Bersihkan data Job Order dan LKH lama agar reset bersih
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $pdo->exec("TRUNCATE TABLE antrian_pallet");
+    $pdo->exec("TRUNCATE TABLE lkh_downtime");
+    $pdo->exec("TRUNCATE TABLE lkh_cacat");
+    $pdo->exec("TRUNCATE TABLE lkh_pp_items");
+    $pdo->exec("TRUNCATE TABLE lkh");
+    $pdo->exec("TRUNCATE TABLE pp_stages");
+    $pdo->exec("TRUNCATE TABLE pp");
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
     // 3. POPULATE PP (JOB ORDERS)
     $jobOrders = [
         [

@@ -95,7 +95,7 @@
         <span class="legend-item"><span class="leg-box leg-proc"></span> Sedang Proses</span>
         <span class="legend-item"><span class="leg-box leg-queue"></span> Antri Terjadwal</span>
         <span class="legend-item"><span class="leg-box leg-extend"></span> <b>⚠️ Auto-Extend (Perpanjangan Jam)</b></span>
-        <span class="legend-item"><span class="leg-line-now"></span> Garis Waktu Sistem Sekarang ({{ CURRENT_SYSTEM_DATETIME }} WIB)</span>
+        <span class="legend-item"><span class="leg-line-now"></span> Garis Batas Waktu Sekarang ({{ CURRENT_SYSTEM_DATETIME }} WIB)</span>
         <span class="legend-item"><b>⏱️ Satuan: Kolom Jam &bull; Perhitungan Posisi Presisi Menit</b></span>
       </div>
     </div>
@@ -146,6 +146,18 @@
 
         <!-- Gantt Body Rows -->
         <div class="gantt-body">
+          <!-- 1 Garis Merah Putus-Putus Penanda Waktu Sekarang Menjalar ke Bawah Seluruh Mesin -->
+          <div
+            v-if="currentNowOffsetPercent >= 0 && currentNowOffsetPercent <= 100"
+            class="global-now-line"
+            :style="{ left: `calc(280px + (100% - 280px) * ${currentNowOffsetPercent / 100})` }"
+          >
+            <div class="global-now-badge">
+              <span class="now-pulse-dot"></span>
+              SEKARANG ({{ currentSystemTimeOnly }} WIB)
+            </div>
+          </div>
+
           <!-- MODE 1: GROUP BY MESIN -->
           <template v-if="viewMode === 'machine'">
             <div v-for="m in visibleMachines" :key="m.id" class="gantt-lane-row">
@@ -175,14 +187,7 @@
                   </template>
                 </div>
 
-                <!-- Now vertical marker line -->
-                <div
-                  v-if="currentNowOffsetPercent >= 0 && currentNowOffsetPercent <= 100"
-                  class="now-marker-line"
-                  :style="{ left: currentNowOffsetPercent + '%' }"
-                >
-                  <span class="now-badge">SEKARANG</span>
-                </div>
+
 
                 <!-- Task Bars on this machine with MINUTE-PRECISION -->
                 <div class="bars-container">
@@ -253,11 +258,7 @@
                   </template>
                 </div>
 
-                <div
-                  v-if="currentNowOffsetPercent >= 0 && currentNowOffsetPercent <= 100"
-                  class="now-marker-line"
-                  :style="{ left: currentNowOffsetPercent + '%' }"
-                ></div>
+
 
                 <div class="bars-container">
                   <div
@@ -470,6 +471,10 @@ const totalTimelineMinutes = computed(() => {
 const currentNowOffsetPercent = computed(() => {
   const minsFromStart = diffMinutes(timelineStartDateTime.value, CURRENT_SYSTEM_DATETIME)
   return (minsFromStart / totalTimelineMinutes.value) * 100
+})
+
+const currentSystemTimeOnly = computed(() => {
+  return CURRENT_SYSTEM_DATETIME.split(' ')[1] || '17:00'
 })
 
 // Filter data
@@ -747,7 +752,7 @@ const getStageBadgeClass = (stage) => {
 .leg-proc { background: #4f46e5; }
 .leg-queue { background: #94a3b8; }
 .leg-extend { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #dc2626 4px, #dc2626 8px); }
-.leg-line-now { width: 3px; height: 12px; background: #dc2626; border-radius: 1px; }
+.leg-line-now { width: 16px; height: 0; border-top: 2px dashed #dc2626; }
 
 /* Viewport */
 .gantt-viewport {
@@ -917,26 +922,64 @@ const getStageBadgeClass = (stage) => {
   flex-shrink: 0;
 }
 
-/* Now Marker Line */
-.now-marker-line {
+.gantt-body {
+  position: relative;
+}
+
+/* 1 Garis Merah Putus-Putus Penanda Waktu Sekarang Menjalar ke Bawah */
+.global-now-line {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: #dc2626;
-  z-index: 5;
+  width: 0;
+  border-left: 2px dashed #dc2626;
+  z-index: 25;
   pointer-events: none;
 }
-.now-badge {
+
+.global-now-badge {
   position: absolute;
-  top: 2px;
-  left: 4px;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
   background: #dc2626;
-  color: #fff;
-  font-size: 0.6rem;
+  color: #ffffff;
+  font-size: 0.68rem;
   font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  pointer-events: auto;
+}
+
+.global-now-badge::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0;
+  border-style: solid;
+  border-color: #dc2626 transparent transparent;
+}
+
+.now-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
 }
 
 /* Bars Container */
