@@ -139,27 +139,27 @@
             <div
               class="pipe-step"
               :class="{
-                done: item.lipat.status === 'selesai',
-                active: item.lipat.status === 'proses',
-                skip: item.lipat.status === 'lewati'
-              }"
-            >
-              <span class="step-num">4</span>
-              <span class="step-name">Lipat (Pcs)</span>
-              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
-            </div>
-            <div class="pipe-arrow">➜</div>
-            <div
-              class="pipe-step"
-              :class="{
                 done: item.sortir.status === 'selesai',
                 active: item.sortir.status === 'proses',
                 skip: item.sortir.status === 'lewati'
               }"
             >
-              <span class="step-num">5</span>
+              <span class="step-num">4</span>
               <span class="step-name">Sortir (Pcs)</span>
               <span class="step-status">{{ item.sortir.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.sortir.status) }}</span>
+            </div>
+            <div class="pipe-arrow">➜</div>
+            <div
+              class="pipe-step"
+              :class="{
+                done: item.lipat.status === 'selesai',
+                active: item.lipat.status === 'proses',
+                skip: item.lipat.status === 'lewati'
+              }"
+            >
+              <span class="step-num">5</span>
+              <span class="step-name">Lipat (Pcs)</span>
+              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@
         <div class="pv-filter-row">
           <div class="pv-title">
             <h2>Progress Job Order (PP) Terpadu Lintas Divisi</h2>
-            <p>Pemantauan alur produksi bertingkat: Cetak (Plano) &rarr; Completing (Plano) &rarr; Cabut (Pcs) &rarr; Lipat (Pcs) &rarr; Sortir (Pcs)</p>
+            <p>Pemantauan alur produksi bertingkat: Cetak (Plano) &rarr; Completing (Plano) &rarr; Cabut (Plano &rarr; Pcs) &rarr; Sortir (Pcs) &rarr; Lipat (Pcs)</p>
           </div>
           <div class="pv-spacer"></div>
           <div class="pv-search-box">
@@ -21,7 +21,7 @@
           </div>
         </div>
 
-        <!-- Row 2: Division Navigation Tabs -->
+        <!-- Row 2: Division Navigation Tabs (Urutan Alur: Cetak -> Completing -> Cabut -> Sortir -> Lipat) -->
         <div class="pv-filter-row pv-division-tabs">
           <button
             type="button"
@@ -58,18 +58,18 @@
           <button
             type="button"
             class="pv-tab-btn"
-            :class="{ active: activeDivisionTab === 'lipat' }"
-            @click="activeDivisionTab = 'lipat'"
-          >
-            📦 Divisi Lipat (Pcs)
-          </button>
-          <button
-            type="button"
-            class="pv-tab-btn"
             :class="{ active: activeDivisionTab === 'sortir' }"
             @click="activeDivisionTab = 'sortir'"
           >
             🔍 Divisi Sortir (Pcs)
+          </button>
+          <button
+            type="button"
+            class="pv-tab-btn"
+            :class="{ active: activeDivisionTab === 'lipat' }"
+            @click="activeDivisionTab = 'lipat'"
+          >
+            📦 Divisi Lipat (Pcs)
           </button>
         </div>
 
@@ -136,7 +136,10 @@
                 <span class="pv-date">Update: {{ item.last_update }}</span>
               </div>
               <h3>{{ item.produk_nama }}</h3>
-              <p>Target Kuota Cetak: <b>{{ formatNumber(item.plan_total) }} plano</b></p>
+              <p>
+                Target Kuota Cetak: <b>{{ formatNumber(item.plan_total) }} plano</b> &bull; 
+                1 Plano = <b>{{ item.up_per_plano || 4 }} Pcs</b> (Input PPIC)
+              </p>
             </div>
 
             <div class="pv-actions">
@@ -150,7 +153,7 @@
             </div>
           </header>
 
-          <!-- Rute Alur Produksi Khusus PP Ini (Standar, Sortir Dulu, Tanpa Lipat, Tanpa Sortir) -->
+          <!-- Rute Alur Produksi Khusus PP Ini (Standar: Cetak -> Completing -> Cabut -> Sortir -> Lipat) -->
           <div class="pv-routing-box">
             <div class="routing-label">
               <span class="routing-badge">Alur Produksi</span>
@@ -269,18 +272,19 @@
               </div>
             </div>
 
-            <!-- ROW 3: DIVISI CABUT / POND (PLANO ➜ PCS) -->
+            <!-- ROW 3: DIVISI CABUT / POND (PLANO ➜ PCS KONVERSI OTOMATIS) -->
             <div class="stage-row" :class="{ 'row-done': item.cabut.status === 'selesai', 'row-active': item.cabut.status === 'proses' }">
               <div class="row-left">
                 <div class="row-badge-wrap">
                   <span class="row-num">3</span>
                   <span class="row-tag tag-cbt">CABUT / POND</span>
-                  <span class="row-unit-badge highlight">Plano &rarr; PCS</span>
+                  <span class="row-unit-badge highlight">Konversi: Plano &rarr; Pcs</span>
                 </div>
                 <div class="row-details">
                   <div class="row-title">
                     <b>Divisi Cabut (Die-Cutting)</b>
                     <span class="row-status-pill" :class="getStatusTone(item.cabut.status)">{{ getStatusLabel(item.cabut.status) }}</span>
+                    <span class="row-conv-pill">1 Plano = {{ item.up_per_plano || 4 }} Pcs (Input PPIC)</span>
                   </div>
                   <div class="row-sub">
                     <span>Mesin: <b>{{ item.cabut.mesin }}</b></span>
@@ -293,20 +297,23 @@
               <div class="row-right">
                 <div class="row-metrics">
                   <div class="metric-cell">
-                    <span class="pv-eyebrow">Input Diterima</span>
+                    <span class="pv-eyebrow">Input dari Completing</span>
                     <b>{{ formatNumber(item.cabut.input_plano) }} <small>plano</small></b>
                   </div>
                   <div class="metric-cell">
-                    <span class="pv-eyebrow">Realisasi Potong</span>
-                    <b>{{ formatNumber(item.cabut.output) }} <small>pcs</small></b>
+                    <span class="pv-eyebrow">Realisasi Potong (Plano)</span>
+                    <b class="txt-brand">{{ formatNumber(item.cabut.potong_plano !== undefined ? item.cabut.potong_plano : item.cabut.input_plano) }} <small>plano</small></b>
+                    <span class="metric-subhint">Konversi: {{ formatNumber(item.cabut.output) }} pcs</span>
                   </div>
                   <div class="metric-cell">
-                    <span class="pv-eyebrow">Hasil Baik (Good)</span>
+                    <span class="pv-eyebrow">Hasil Baik (Good Pcs)</span>
                     <b class="txt-ok">{{ formatNumber(item.cabut.good) }} <small>pcs</small></b>
+                    <span class="metric-subhint">{{ formatNumber(item.cabut.good_plano) }} plano &times; {{ item.up_per_plano || 4 }} up</span>
                   </div>
                   <div class="metric-cell">
-                    <span class="pv-eyebrow">Afval / Reject</span>
+                    <span class="pv-eyebrow">Afval / Reject (Pcs)</span>
                     <b class="txt-bad">{{ formatNumber(item.cabut.reject) }} <small>pcs</small></b>
+                    <span class="metric-subhint">{{ formatNumber(item.cabut.reject_plano) }} plano &times; {{ item.up_per_plano || 4 }} up</span>
                   </div>
                   <div class="metric-cell cell-pct">
                     <span class="pv-eyebrow">Progress</span>
@@ -323,79 +330,7 @@
               </div>
             </div>
 
-            <!-- ROW 4: DIVISI LIPAT & LEM (PCS) (Bisa aktif atau dilewati) -->
-            <div
-              class="stage-row"
-              :class="{
-                'row-done': item.lipat.status === 'selesai',
-                'row-active': item.lipat.status === 'proses',
-                'row-skip': item.lipat.status === 'lewati'
-              }"
-            >
-              <div class="row-left">
-                <div class="row-badge-wrap">
-                  <span class="row-num">4</span>
-                  <span class="row-tag tag-lpt">LIPAT &amp; LEM</span>
-                  <span class="row-unit-badge">Satuan: PCS</span>
-                </div>
-                <div class="row-details">
-                  <div class="row-title">
-                    <b>Divisi Lipat</b>
-                    <span class="row-status-pill" :class="getStatusTone(item.lipat.status)">{{ getStatusLabel(item.lipat.status) }}</span>
-                    <span v-if="item.lipat.urutan === 'setelah_sortir'" class="row-note-pill">Dikerjakan Setelah Sortir</span>
-                  </div>
-                  <div class="row-sub">
-                    <template v-if="item.lipat.status !== 'lewati'">
-                      <span>Mesin: <b>{{ item.lipat.mesin }}</b></span>
-                      <span>Operator: <b>{{ item.lipat.operator }}</b></span>
-                      <span v-if="item.lipat.opsi" class="row-opt">Opsi: <i>{{ item.lipat.opsi }}</i></span>
-                    </template>
-                    <template v-else>
-                      <span class="txt-muted"><i>{{ item.lipat.opsi }}</i></span>
-                    </template>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row-right">
-                <template v-if="item.lipat.status !== 'lewati'">
-                  <div class="row-metrics">
-                    <div class="metric-cell">
-                      <span class="pv-eyebrow">Input Diterima</span>
-                      <b>{{ formatNumber(item.lipat.plan) }} <small>pcs</small></b>
-                    </div>
-                    <div class="metric-cell">
-                      <span class="pv-eyebrow">Realisasi Lipat</span>
-                      <b>{{ formatNumber(item.lipat.output) }} <small>pcs</small></b>
-                    </div>
-                    <div class="metric-cell">
-                      <span class="pv-eyebrow">Hasil Baik (Good)</span>
-                      <b class="txt-ok">{{ formatNumber(item.lipat.good) }} <small>pcs</small></b>
-                    </div>
-                    <div class="metric-cell">
-                      <span class="pv-eyebrow">Afval / Reject</span>
-                      <b class="txt-bad">{{ formatNumber(item.lipat.reject) }} <small>pcs</small></b>
-                    </div>
-                    <div class="metric-cell cell-pct">
-                      <span class="pv-eyebrow">Progress</span>
-                      <b :class="item.lipat.progress >= 100 ? 'txt-ok' : 'txt-brand'">{{ item.lipat.progress.toFixed(1) }}%</b>
-                    </div>
-                  </div>
-                  <div class="row-track">
-                    <div
-                      class="row-fill"
-                      :class="item.lipat.progress >= 100 ? 'bg-ok' : (item.lipat.progress > 0 ? 'bg-brand' : 'bg-idle')"
-                      :style="{ width: Math.min(item.lipat.progress, 100) + '%' }"
-                    ></div>
-                  </div>
-                </template>
-                <div v-else class="row-skip-msg">
-                  <span>Tahap Lipat dilewati pada Job Order ini &bull; Langsung diteruskan ke proses berikutnya / kirim</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ROW 5: DIVISI SORTIR (PCS) (Dengan opsi S1, S2, S3) -->
+            <!-- ROW 4: DIVISI SORTIR & QC (PCS) (Menerima sheet dari Cabut sebelum dilipat) -->
             <div
               class="stage-row"
               :class="{
@@ -406,19 +341,19 @@
             >
               <div class="row-left">
                 <div class="row-badge-wrap">
-                  <span class="row-num">5</span>
+                  <span class="row-num">4</span>
                   <span class="row-tag tag-srt">SORTIR &amp; QC</span>
                   <span class="row-unit-badge">Satuan: PCS</span>
                 </div>
                 <div class="row-details">
                   <div class="row-title">
-                    <b>Divisi Sortir</b>
+                    <b>Divisi Sortir (QC)</b>
                     <span class="row-status-pill" :class="getStatusTone(item.sortir.status)">{{ getStatusLabel(item.sortir.status) }}</span>
-                    <span v-if="item.sortir.urutan === 'sebelum_lipat'" class="row-note-pill">Disortir Sebelum Lipat (Flat Sheet)</span>
+                    <span class="row-note-pill">Disortir Sebelum Masuk Lipat</span>
                   </div>
                   <div class="row-sub">
                     <template v-if="item.sortir.status !== 'lewati'">
-                      <span>Mesin: <b>{{ item.sortir.mesin }}</b></span>
+                      <span>Mesin / Meja: <b>{{ item.sortir.mesin }}</b></span>
                       <span>Operator: <b>{{ item.sortir.operator }}</b></span>
                       <span v-if="item.sortir.opsi" class="row-opt">Opsi: <i>{{ item.sortir.opsi }}</i></span>
                     </template>
@@ -433,7 +368,7 @@
                 <template v-if="item.sortir.status !== 'lewati'">
                   <div class="row-metrics">
                     <div class="metric-cell">
-                      <span class="pv-eyebrow">Input Diterima</span>
+                      <span class="pv-eyebrow">Input dari Cabut</span>
                       <b>{{ formatNumber(item.sortir.plan) }} <small>pcs</small></b>
                     </div>
                     <div class="metric-cell">
@@ -491,7 +426,79 @@
                   </div>
                 </template>
                 <div v-else class="row-skip-msg">
-                  <span>Tahap Sortir dilewati pada Job Order ini &bull; Langsung diteruskan dari Lipat ke Pengiriman</span>
+                  <span>Tahap Sortir dilewati pada Job Order ini &bull; QC terintegrasi di mesin</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 5: DIVISI LIPAT & LEM (PCS) (Menerima hasil sheet yang sudah lolos sortir) -->
+            <div
+              class="stage-row"
+              :class="{
+                'row-done': item.lipat.status === 'selesai',
+                'row-active': item.lipat.status === 'proses',
+                'row-skip': item.lipat.status === 'lewati'
+              }"
+            >
+              <div class="row-left">
+                <div class="row-badge-wrap">
+                  <span class="row-num">5</span>
+                  <span class="row-tag tag-lpt">LIPAT &amp; LEM</span>
+                  <span class="row-unit-badge">Satuan: PCS</span>
+                </div>
+                <div class="row-details">
+                  <div class="row-title">
+                    <b>Divisi Lipat (Gluer)</b>
+                    <span class="row-status-pill" :class="getStatusTone(item.lipat.status)">{{ getStatusLabel(item.lipat.status) }}</span>
+                    <span v-if="item.lipat.status !== 'lewati'" class="row-note-pill">Menerima Pcs Lolos Sortir</span>
+                  </div>
+                  <div class="row-sub">
+                    <template v-if="item.lipat.status !== 'lewati'">
+                      <span>Mesin: <b>{{ item.lipat.mesin }}</b></span>
+                      <span>Operator: <b>{{ item.lipat.operator }}</b></span>
+                      <span v-if="item.lipat.opsi" class="row-opt">Opsi: <i>{{ item.lipat.opsi }}</i></span>
+                    </template>
+                    <template v-else>
+                      <span class="txt-muted"><i>{{ item.lipat.opsi }}</i></span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row-right">
+                <template v-if="item.lipat.status !== 'lewati'">
+                  <div class="row-metrics">
+                    <div class="metric-cell">
+                      <span class="pv-eyebrow">Input dari Sortir</span>
+                      <b>{{ formatNumber(item.lipat.plan) }} <small>pcs</small></b>
+                    </div>
+                    <div class="metric-cell">
+                      <span class="pv-eyebrow">Realisasi Lipat</span>
+                      <b>{{ formatNumber(item.lipat.output) }} <small>pcs</small></b>
+                    </div>
+                    <div class="metric-cell">
+                      <span class="pv-eyebrow">Hasil Baik (Good)</span>
+                      <b class="txt-ok">{{ formatNumber(item.lipat.good) }} <small>pcs</small></b>
+                    </div>
+                    <div class="metric-cell">
+                      <span class="pv-eyebrow">Afval / Reject</span>
+                      <b class="txt-bad">{{ formatNumber(item.lipat.reject) }} <small>pcs</small></b>
+                    </div>
+                    <div class="metric-cell cell-pct">
+                      <span class="pv-eyebrow">Progress</span>
+                      <b :class="item.lipat.progress >= 100 ? 'txt-ok' : 'txt-brand'">{{ item.lipat.progress.toFixed(1) }}%</b>
+                    </div>
+                  </div>
+                  <div class="row-track">
+                    <div
+                      class="row-fill"
+                      :class="item.lipat.progress >= 100 ? 'bg-ok' : (item.lipat.progress > 0 ? 'bg-brand' : 'bg-idle')"
+                      :style="{ width: Math.min(item.lipat.progress, 100) + '%' }"
+                    ></div>
+                  </div>
+                </template>
+                <div v-else class="row-skip-msg">
+                  <span>Tahap Lipat dilewati pada Job Order ini &bull; Dikirim dalam bentuk lembaran datar (flat packaging) langsung ke gudang / packing</span>
                 </div>
               </div>
             </div>
@@ -514,12 +521,12 @@
       <CabutProgressPP :items="filteredList" :showHeader="false" />
     </div>
 
-    <div v-else-if="activeDivisionTab === 'lipat'">
-      <LipatProgressPP :items="filteredList" :showHeader="false" />
-    </div>
-
     <div v-else-if="activeDivisionTab === 'sortir'">
       <SortirProgressPP :items="filteredList" :showHeader="false" />
+    </div>
+
+    <div v-else-if="activeDivisionTab === 'lipat'">
+      <LipatProgressPP :items="filteredList" :showHeader="false" />
     </div>
   </div>
 </template>
@@ -532,31 +539,29 @@ import { jobOrdersState, formatNumber, getStatusTone, getStatusLabel } from '../
 import CetakProgressPP from './cetak/ProgressPP.vue'
 import CompletingProgressPP from './completing/ProgressPP.vue'
 import CabutProgressPP from './cabut/ProgressPP.vue'
-import LipatProgressPP from './lipat/ProgressPP.vue'
 import SortirProgressPP from './sortir/ProgressPP.vue'
+import LipatProgressPP from './lipat/ProgressPP.vue'
 
-const activeDivisionTab = ref('all')
-const statusFilter = ref('')
 const searchQuery = ref('')
+const statusFilter = ref('') // '' | 'aktif' | 'req' | 'selesai'
+const activeDivisionTab = ref('all') // 'all' | 'cetak' | 'completing' | 'cabut' | 'sortir' | 'lipat'
 
 const allOrders = computed(() => jobOrdersState.value)
 
-// KPIs
-const kpiAktifCount = computed(() => allOrders.value.filter(x => x.status === 'aktif').length)
-const kpiReqCount = computed(() => allOrders.value.filter(x => x.status === 'req').length)
-const kpiSelesaiCount = computed(() => allOrders.value.filter(x => x.status === 'selesai').length)
+const kpiAktifCount = computed(() => allOrders.value.filter(j => j.status === 'aktif').length)
+const kpiReqCount = computed(() => allOrders.value.filter(j => j.status === 'req').length)
+const kpiSelesaiCount = computed(() => allOrders.value.filter(j => j.status === 'selesai').length)
 
-// Filtering (Tanpa Famili)
 const filteredList = computed(() => {
   return allOrders.value.filter(item => {
-    if (searchQuery.value) {
-      const q = searchQuery.value.trim().toLowerCase()
-      const noPp = (item.no_pp || '').toLowerCase()
-      const prod = (item.produk_nama || '').toLowerCase()
-      if (!noPp.includes(q) && !prod.includes(q)) return false
-    }
     if (statusFilter.value && item.status !== statusFilter.value) {
       return false
+    }
+    if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase().trim()
+      const matchNo = item.no_pp.toLowerCase().includes(q)
+      const matchProd = item.produk_nama.toLowerCase().includes(q)
+      if (!matchNo && !matchProd) return false
     }
     return true
   })
@@ -565,38 +570,22 @@ const filteredList = computed(() => {
 
 <style scoped>
 .pv {
-  --c-brand: #4f46e5;
-  --c-ok: #10b981;
-  --c-warn: #d97706;
-  --c-bad: #e11d48;
-  --c-s3: #7c3aed;
-  --c-ink: #0f172a;
-  --c-text: #334155;
-  --c-muted: #64748b;
-  --c-line: #e2e8f0;
-  --c-soft: #f8fafc;
-  color: var(--c-text);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0 2rem;
 }
 
-.pv-muted { color: var(--c-muted); font-size: 0.78rem; }
-.pv-spacer { flex: 1; }
-.pv-eyebrow { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--c-muted); }
-
-.txt-ok { color: var(--c-ok); }
-.txt-warn { color: var(--c-warn); }
-.txt-bad { color: var(--c-bad); }
-.txt-brand { color: var(--c-brand); }
-.txt-muted { color: var(--c-muted); }
-.bg-ok { background: var(--c-ok); }
-.bg-brand { background: linear-gradient(90deg, #6366f1, var(--c-brand)); }
-.bg-idle { background: #cbd5e1; }
-
 /* Filter Card */
-.pv-filter { position: sticky; top: 0; z-index: 25; padding: 4px 0 10px; background: var(--bg, #f4f5fb); }
 .pv-filter-card {
-  background: #fff; border: 1px solid var(--c-line); border-radius: 14px;
-  padding: 0.75rem 1rem; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
-  display: flex; flex-direction: column; gap: 0.65rem;
+  background: #ffffff;
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 .pv-filter-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .pv-title h2 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--c-ink); }
@@ -658,70 +647,86 @@ const filteredList = computed(() => {
 .pv-stat + .pv-stat { border-left: 1px solid var(--c-line); }
 .pv-stat .pv-eyebrow { width: 100%; margin-bottom: 2px; }
 .pv-stat b { font-size: 1.5rem; font-weight: 800; color: var(--c-ink); }
-.pv-stat small { font-size: 0.76rem; color: var(--c-muted); }
+.pv-stat small { color: var(--c-muted); font-size: 0.75rem; }
 
-/* Card List */
-.pv-list { display: flex; flex-direction: column; gap: 1.25rem; }
+/* Article Card */
+.pv-list { display: flex; flex-direction: column; gap: 1.5rem; }
 .pv-card {
-  background: #fff; border: 1px solid var(--c-line); border-radius: 14px;
-  padding: 1.15rem; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
-  display: flex; flex-direction: column; gap: 0.9rem; transition: box-shadow 0.15s;
+  background: #ffffff;
+  border: 1px solid var(--c-line);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-.pv-card:hover { box-shadow: 0 6px 20px rgba(15, 23, 42, 0.09); }
-.pv-empty { text-align: center; padding: 2.5rem; color: var(--c-muted); font-size: 0.85rem; }
+.pv-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--c-muted);
+  font-size: 0.9rem;
+}
 
-.pv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; }
-.pv-head-main { display: flex; flex-direction: column; gap: 2px; }
-.pv-pills { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.pv-no {
-  font-size: 0.95rem; font-weight: 800; color: var(--c-brand);
-  background: #eef2ff; border: 1px solid #c7d2fe; padding: 2px 10px; border-radius: 8px;
+/* Card Head */
+.pv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 1px solid var(--c-line);
+  padding-bottom: 0.75rem;
 }
+.pv-head-main h3 {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--c-ink);
+}
+.pv-head-main p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--c-muted);
+}
+.pv-pills { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.pv-no { font-family: monospace; font-size: 0.9rem; font-weight: 800; color: var(--c-brand); }
+.pv-pill { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
 .pv-date { font-size: 0.72rem; color: var(--c-muted); margin-left: 4px; }
-.pv-pill { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
-.tone-ok { background: #d1fae5; color: #065f46; }
-.tone-brand { background: #e0e7ff; color: #3730a3; }
-.tone-warn { background: #fef3c7; color: #92400e; }
-.tone-bad { background: #fee2e2; color: #991b1b; }
-.tone-skip { background: #f1f5f9; color: #64748b; border: 1px dashed #cbd5e1; }
-.tone-muted { background: #f1f5f9; color: #475569; }
-
-.pv-head h3 { margin: 0.4rem 0 0; font-size: 1.12rem; font-weight: 800; color: var(--c-ink); }
-.pv-head p { margin: 2px 0 0; font-size: 0.8rem; color: var(--c-muted); }
-.pv-head p b { color: var(--c-text); }
-
-.pv-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 32px; padding: 0 0.8rem; font-size: 0.78rem; font-weight: 600; text-decoration: none;
-  border-radius: 8px; cursor: pointer; transition: background 0.15s;
-}
-.pv-btn-dark { background: #1e293b; color: #fff; }
-.pv-btn-dark:hover { background: #0f172a; }
 
 /* Routing Box */
 .pv-routing-box {
-  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-  padding: 0.45rem 0.75rem;
+  background: #f8fafc;
+  border: 1px dashed var(--c-line);
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
 }
 .routing-label {
-  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-  font-size: 0.78rem; color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--c-ink);
 }
 .routing-badge {
-  background: #0284c7; color: #fff; font-size: 0.68rem; font-weight: 800;
-  padding: 2px 8px; border-radius: 4px; text-transform: uppercase;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
 }
 
-/* ============ 5 ROWS (ONE PER DIVISION) ============ */
+/* 5 Stage Rows Layout */
 .pv-stage-rows {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .stage-row {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 290px 1fr;
   gap: 1rem;
   align-items: center;
   background: #ffffff;
@@ -763,8 +768,8 @@ const filteredList = computed(() => {
 .tag-ctk { background: #e0e7ff; color: #4338ca; }
 .tag-cmp { background: #fef3c7; color: #b45309; }
 .tag-cbt { background: #e0f2fe; color: #0369a1; }
-.tag-lpt { background: #dcfce7; color: #15803d; }
 .tag-srt { background: #ede9fe; color: #6d28d9; }
+.tag-lpt { background: #dcfce7; color: #15803d; }
 
 .row-unit-badge {
   font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
@@ -787,6 +792,10 @@ const filteredList = computed(() => {
 .row-note-pill {
   font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;
   background: #fdf4ff; color: #a21caf; border: 1px solid #f0abfc;
+}
+.row-conv-pill {
+  font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
 }
 
 .row-sub {
@@ -817,6 +826,7 @@ const filteredList = computed(() => {
 .metric-cell { display: flex; flex-direction: column; gap: 2px; }
 .metric-cell b { font-size: 0.95rem; font-weight: 800; color: var(--c-ink); }
 .metric-cell small { font-size: 0.7rem; font-weight: 600; color: var(--c-muted); }
+.metric-subhint { font-size: 0.68rem; color: #64748b; font-weight: 600; margin-top: 1px; }
 .cell-pct { text-align: right; }
 .cell-pct b { font-size: 1.15rem; }
 
@@ -834,7 +844,7 @@ const filteredList = computed(() => {
   text-align: center;
 }
 
-/* Sortir Sub-Options in Row 5 */
+/* Sortir Sub-Options in Row 4 */
 .sortir-sub-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

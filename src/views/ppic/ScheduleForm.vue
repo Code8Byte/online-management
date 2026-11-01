@@ -192,49 +192,49 @@
             </div>
           </div>
 
-          <!-- Tahap 4: Lipat (Folder Gluer) -->
+          <!-- Tahap 4: Sortir (QC & Optical Inspection) -->
           <div class="stage-config-card" :class="{ disabled: !form.stages[3].enabled }">
             <div class="stage-toggle">
               <label class="check-box-label">
                 <input type="checkbox" v-model="form.stages[3].enabled" />
-                <span class="stage-name-tag tag-lpt">4. LIPAT &amp; LEM (Pcs)</span>
+                <span class="stage-name-tag tag-srt">4. SORTIR &amp; QC (Pcs)</span>
               </label>
-              <span v-if="!form.stages[3].enabled" class="badge-skip">Dilewati (Produk Lembaran)</span>
+              <span v-if="!form.stages[3].enabled" class="badge-skip">Dilewati (QC Inline)</span>
             </div>
             <div v-if="form.stages[3].enabled" class="stage-selector">
-              <label>Pilih Mesin Gluer:</label>
+              <label>Pilih Mesin / Meja Sortir:</label>
               <select v-model="form.stages[3].mesin_id" class="form-select">
-                <option v-for="m in machineOptionsByStage('lipat')" :key="m.id" :value="m.id">
+                <option v-for="m in machineOptionsByStage('sortir')" :key="m.id" :value="m.id">
                   {{ m.nama }} (Speed: {{ formatNumber(m.speed_jph) }} pcs/jam &bull; Kapasitas: {{ formatNumber(m.speed_jph * m.jam_hari) }} pcs/hari)
                 </option>
               </select>
             </div>
             <div v-if="form.stages[3].enabled" class="stage-est">
               <span>Estimasi Durasi: <b>{{ estimateDaysForStage(3) }} Hari</b></span>
-              <small>Mengelem {{ formatNumber(form.oplaag_pcs) }} pcs</small>
+              <small>Memeriksa {{ formatNumber(form.oplaag_pcs) }} pcs sheet dari Cabut</small>
             </div>
           </div>
 
-          <!-- Tahap 5: Sortir (QC & Optical Inspection) -->
+          <!-- Tahap 5: Lipat (Folder Gluer) -->
           <div class="stage-config-card" :class="{ disabled: !form.stages[4].enabled }">
             <div class="stage-toggle">
               <label class="check-box-label">
                 <input type="checkbox" v-model="form.stages[4].enabled" />
-                <span class="stage-name-tag tag-srt">5. SORTIR &amp; QC (Pcs)</span>
+                <span class="stage-name-tag tag-lpt">5. LIPAT &amp; LEM (Pcs)</span>
               </label>
-              <span v-if="!form.stages[4].enabled" class="badge-skip">Dilewati (QC Inline)</span>
+              <span v-if="!form.stages[4].enabled" class="badge-skip">Dilewati (Produk Lembaran)</span>
             </div>
             <div v-if="form.stages[4].enabled" class="stage-selector">
-              <label>Pilih Mesin / Meja Sortir:</label>
+              <label>Pilih Mesin Gluer:</label>
               <select v-model="form.stages[4].mesin_id" class="form-select">
-                <option v-for="m in machineOptionsByStage('sortir')" :key="m.id" :value="m.id">
+                <option v-for="m in machineOptionsByStage('lipat')" :key="m.id" :value="m.id">
                   {{ m.nama }} (Speed: {{ formatNumber(m.speed_jph) }} pcs/jam &bull; Kapasitas: {{ formatNumber(m.speed_jph * m.jam_hari) }} pcs/hari)
                 </option>
               </select>
             </div>
             <div v-if="form.stages[4].enabled" class="stage-est">
               <span>Estimasi Durasi: <b>{{ estimateDaysForStage(4) }} Hari</b></span>
-              <small>Memeriksa {{ formatNumber(form.oplaag_pcs) }} pcs</small>
+              <small>Mengelem {{ formatNumber(form.oplaag_pcs) }} pcs lolos sortir</small>
             </div>
           </div>
         </div>
@@ -277,8 +277,8 @@ const form = ref({
     { stage: 'cetak', enabled: true, mesin_id: 'sm23' },
     { stage: 'completing', enabled: true, mesin_id: 'hsf1' },
     { stage: 'cabut', enabled: true, mesin_id: 'ms1' },
-    { stage: 'lipat', enabled: true, mesin_id: 'gluer_herui' },
-    { stage: 'sortir', enabled: true, mesin_id: 'sortir_fs500' }
+    { stage: 'sortir', enabled: true, mesin_id: 'sortir_fs500' },
+    { stage: 'lipat', enabled: true, mesin_id: 'gluer_herui' }
   ]
 })
 

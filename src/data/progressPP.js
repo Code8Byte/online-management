@@ -8,8 +8,9 @@ export const initialJobOrders = [
     status: 'aktif',
     plan_total: 50000,
     plan_unit: 'plano',
+    up_per_plano: 4, // Input PPIC: 1 Plano isi 4 pcs
     alur_tipe: 'standar',
-    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Lipat ➜ Sortir ➜ Kirim)',
+    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Sortir ➜ Lipat ➜ Kirim)',
     created_at: '2026-10-25',
     last_update: '2026-10-31 14:30',
     cetak: {
@@ -43,18 +44,39 @@ export const initialJobOrders = [
     cabut: {
       stage: 'Cabut',
       tag: 'CBT',
-      mesin: 'Bobst MS 1 (Die Plat 12 Up)',
+      mesin: 'Bobst MS 1 (Die Plat 4 Up)',
       operator: 'Haryanto',
-      opsi: 'Pond Potong & Stripping (Plano ➜ Pcs)',
+      opsi: 'Pond Potong & Stripping (Konversi Plano ➜ Pcs)',
       status: 'proses',
       input_unit: 'plano',
       unit: 'pcs',
       input_plano: 44200, // Hasil baik dari completing
-      plan: 44200,
-      output: 38000,
-      good: 37400,
-      reject: 600,
+      potong_plano: 38000, // Realisasi potong dalam plano
+      good_plano: 37400, // Lembar plano baik
+      reject_plano: 600, // Lembar plano afval
+      up_per_plano: 4, // 1 plano isi 4 pcs (PPIC)
+      plan: 176800, // 44200 plano x 4 up = 176800 pcs
+      output: 152000, // 38000 plano x 4 up = 152000 pcs
+      good: 149600, // 37400 plano x 4 up = 149600 pcs
+      reject: 2400, // 600 plano x 4 up = 2400 pcs
       progress: 86.0
+    },
+    sortir: {
+      stage: 'Sortir',
+      tag: 'SRT',
+      mesin: 'Focusight FS-500 Shark',
+      operator: 'Bambang S.',
+      opsi: 'Inspeksi Kualitas Sheet Hasil Cabut Sebelum Dilipat',
+      status: 'proses',
+      unit: 'pcs',
+      plan: 149600, // Hasil baik dari Cabut (pcs)
+      s1: { output: 120000, good: 118000, reject: 2000 },
+      s2: { output: 2000, good: 1700, reject: 300 },
+      s3: { output: 0, good: 0, reject: 0 },
+      total_output: 122000,
+      total_good: 119700,
+      total_reject: 2300,
+      progress: 81.5
     },
     lipat: {
       stage: 'Lipat',
@@ -64,28 +86,11 @@ export const initialJobOrders = [
       opsi: 'Straight Line Gluing & Folding Box',
       status: 'proses',
       unit: 'pcs',
-      plan: 37400, // Hasil baik dari cabut
-      output: 30000,
-      good: 29600,
-      reject: 400,
-      progress: 80.2
-    },
-    sortir: {
-      stage: 'Sortir',
-      tag: 'SRT',
-      mesin: 'Focusight FS-500 Shark',
-      operator: 'Bambang S.',
-      opsi: 'Final Quality Check Box Jadi',
-      status: 'proses',
-      unit: 'pcs',
-      plan: 29600, // Hasil baik dari lipat
-      s1: { output: 25000, good: 24300, reject: 700 },
-      s2: { output: 700, good: 580, reject: 120 },
-      s3: { output: 0, good: 0, reject: 0 },
-      total_output: 25700,
-      total_good: 24880,
-      total_reject: 820,
-      progress: 84.5
+      plan: 119700, // Menerima hasil baik sortir
+      output: 100000,
+      good: 99200,
+      reject: 800,
+      progress: 83.5
     }
   },
   {
@@ -95,8 +100,9 @@ export const initialJobOrders = [
     status: 'aktif',
     plan_total: 40000,
     plan_unit: 'plano',
-    alur_tipe: 'sortir_dulu',
-    alur_label: 'Sortir Dulu Baru Lipat (Cetak ➜ Completing ➜ Cabut ➜ Sortir Sheet ➜ Lipat ➜ Kirim)',
+    up_per_plano: 4, // Input PPIC: 1 Plano isi 4 pcs
+    alur_tipe: 'standar',
+    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Sortir Sheet ➜ Lipat ➜ Kirim)',
     created_at: '2026-10-26',
     last_update: '2026-10-31 15:10',
     cetak: {
@@ -137,10 +143,14 @@ export const initialJobOrders = [
       input_unit: 'plano',
       unit: 'pcs',
       input_plano: 38800,
-      plan: 38800,
-      output: 38800,
-      good: 38200,
-      reject: 600,
+      potong_plano: 38800, // Realisasi potong plano
+      good_plano: 38200, // Plano baik
+      reject_plano: 600, // Plano reject
+      up_per_plano: 4, // 1 plano = 4 pcs
+      plan: 155200, // 38800 x 4
+      output: 155200, // 38800 x 4
+      good: 152800, // 38200 x 4
+      reject: 2400, // 600 x 4
       progress: 100.0
     },
     sortir: {
@@ -151,15 +161,14 @@ export const initialJobOrders = [
       opsi: 'Inspeksi Flat Sheet Hasil Pond Sebelum Lem',
       status: 'proses',
       unit: 'pcs',
-      urutan: 'sebelum_lipat',
-      plan: 38200, // Langsung terima dari cabut
-      s1: { output: 35000, good: 34500, reject: 500 },
-      s2: { output: 500, good: 420, reject: 80 },
+      plan: 152800, // Langsung terima dari Cabut (pcs)
+      s1: { output: 140000, good: 138000, reject: 2000 },
+      s2: { output: 2000, good: 1680, reject: 320 },
       s3: { output: 0, good: 0, reject: 0 },
-      total_output: 35500,
-      total_good: 34920,
-      total_reject: 580,
-      progress: 91.4
+      total_output: 142000,
+      total_good: 139680,
+      total_reject: 2320,
+      progress: 92.9
     },
     lipat: {
       stage: 'Lipat',
@@ -169,12 +178,11 @@ export const initialJobOrders = [
       opsi: 'Lipat & Lem Hasil Sheet yang Sudah Disortir',
       status: 'proses',
       unit: 'pcs',
-      urutan: 'setelah_sortir',
-      plan: 34920, // Menerima sheet yang sudah lolos sortir
-      output: 28000,
-      good: 27700,
-      reject: 300,
-      progress: 80.0
+      plan: 139680, // Menerima sheet lolos sortir
+      output: 112000,
+      good: 110800,
+      reject: 1200,
+      progress: 80.2
     }
   },
   {
@@ -184,6 +192,7 @@ export const initialJobOrders = [
     status: 'aktif',
     plan_total: 60000,
     plan_unit: 'plano',
+    up_per_plano: 2, // Input PPIC: 1 Plano isi 2 pcs
     alur_tipe: 'tanpa_lipat',
     alur_label: 'Sortir Saja Lalu Kirim (Cetak ➜ Completing ➜ Cabut ➜ Sortir ➜ Langsung Kirim Tanpa Lipat)',
     created_at: '2026-10-27',
@@ -226,10 +235,31 @@ export const initialJobOrders = [
       input_unit: 'plano',
       unit: 'pcs',
       input_plano: 44200,
-      plan: 44200,
+      potong_plano: 0,
+      good_plano: 0,
+      reject_plano: 0,
+      up_per_plano: 2,
+      plan: 88400, // 44200 x 2
       output: 0,
       good: 0,
       reject: 0,
+      progress: 0
+    },
+    sortir: {
+      stage: 'Sortir',
+      tag: 'SRT',
+      mesin: 'Luster Raptor Optical',
+      operator: 'Dwi Cahyono',
+      opsi: 'Sortir Cacat Dimensi Lembaran Flat Karton',
+      status: 'antri',
+      unit: 'pcs',
+      plan: 88400, // Menerima langsung dari Cabut (pcs)
+      s1: { output: 0, good: 0, reject: 0 },
+      s2: { output: 0, good: 0, reject: 0 },
+      s3: { output: 0, good: 0, reject: 0 },
+      total_output: 0,
+      total_good: 0,
+      total_reject: 0,
       progress: 0
     },
     lipat: {
@@ -245,23 +275,6 @@ export const initialJobOrders = [
       good: 0,
       reject: 0,
       progress: 100.0
-    },
-    sortir: {
-      stage: 'Sortir',
-      tag: 'SRT',
-      mesin: 'Luster Raptor Optical',
-      operator: 'Dwi Cahyono',
-      opsi: 'Sortir Cacat Dimensi Lembaran Flat Karton',
-      status: 'antri',
-      unit: 'pcs',
-      plan: 44200, // Menerima langsung dari Cabut
-      s1: { output: 0, good: 0, reject: 0 },
-      s2: { output: 0, good: 0, reject: 0 },
-      s3: { output: 0, good: 0, reject: 0 },
-      total_output: 0,
-      total_good: 0,
-      total_reject: 0,
-      progress: 0
     }
   },
   {
@@ -271,8 +284,9 @@ export const initialJobOrders = [
     status: 'aktif',
     plan_total: 35000,
     plan_unit: 'plano',
-    alur_tipe: 'tanpa_sortir',
-    alur_label: 'Lipat Langsung Terus Kirim (Cetak ➜ Completing ➜ Cabut ➜ Lipat ➜ Langsung Kirim Tanpa Sortir)',
+    up_per_plano: 6, // Input PPIC: 1 Plano isi 6 pcs
+    alur_tipe: 'standar',
+    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Sortir ➜ Lipat ➜ Kirim)',
     created_at: '2026-10-28',
     last_update: '2026-10-31 16:40',
     cetak: {
@@ -313,21 +327,11 @@ export const initialJobOrders = [
       input_unit: 'plano',
       unit: 'pcs',
       input_plano: 27400,
-      plan: 27400,
-      output: 0,
-      good: 0,
-      reject: 0,
-      progress: 0
-    },
-    lipat: {
-      stage: 'Lipat',
-      tag: 'LPT',
-      mesin: 'Mesin Lipat 3 Multi-Point',
-      operator: 'Ari',
-      opsi: 'High Speed Folding + Sensor Cacat Otomatis (Inline QC)',
-      status: 'antri',
-      unit: 'pcs',
-      plan: 27400,
+      potong_plano: 0,
+      good_plano: 0,
+      reject_plano: 0,
+      up_per_plano: 6,
+      plan: 164400, // 27400 x 6
       output: 0,
       good: 0,
       reject: 0,
@@ -336,19 +340,33 @@ export const initialJobOrders = [
     sortir: {
       stage: 'Sortir',
       tag: 'SRT',
-      mesin: '-',
-      operator: '-',
-      opsi: 'Dilewati: QC telah terintegrasi di sensor mesin lipat',
-      status: 'lewati',
+      mesin: 'Focusight FS-500',
+      operator: 'Tim Sortir A',
+      opsi: 'Inspeksi Presisi Register & Foil Sheet',
+      status: 'antri',
       unit: 'pcs',
-      plan: 0,
+      plan: 164400, // 27400 x 6
       s1: { output: 0, good: 0, reject: 0 },
       s2: { output: 0, good: 0, reject: 0 },
       s3: { output: 0, good: 0, reject: 0 },
       total_output: 0,
       total_good: 0,
       total_reject: 0,
-      progress: 100.0
+      progress: 0
+    },
+    lipat: {
+      stage: 'Lipat',
+      tag: 'LPT',
+      mesin: 'Mesin Lipat 3 Multi-Point',
+      operator: 'Ari',
+      opsi: 'High Speed Folding Inner Frame',
+      status: 'antri',
+      unit: 'pcs',
+      plan: 164400,
+      output: 0,
+      good: 0,
+      reject: 0,
+      progress: 0
     }
   },
   {
@@ -358,8 +376,9 @@ export const initialJobOrders = [
     status: 'selesai',
     plan_total: 25000,
     plan_unit: 'plano',
+    up_per_plano: 4, // Input PPIC: 1 Plano isi 4 pcs
     alur_tipe: 'standar',
-    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Lipat ➜ Sortir ➜ Kirim)',
+    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Sortir ➜ Lipat ➜ Kirim)',
     created_at: '2026-10-20',
     last_update: '2026-10-29 17:00',
     cetak: {
@@ -386,7 +405,7 @@ export const initialJobOrders = [
       unit: 'plano',
       plan: 24700,
       output: 24600,
-      good: 24300,
+      good: 24300, // Hasil baik completing = 24.300 plano
       reject: 300,
       progress: 100.0
     },
@@ -399,25 +418,15 @@ export const initialJobOrders = [
       status: 'selesai',
       input_unit: 'plano',
       unit: 'pcs',
-      input_plano: 24300,
-      plan: 24300,
-      output: 24300,
-      good: 24000,
-      reject: 300,
-      progress: 100.0
-    },
-    lipat: {
-      stage: 'Lipat',
-      tag: 'LPT',
-      mesin: 'Mesin Lipat Brosur Z-Fold',
-      operator: 'Sugeng',
-      opsi: 'Lipat Z-Fold 3 Lipatan',
-      status: 'selesai',
-      unit: 'pcs',
-      plan: 24000,
-      output: 24000,
-      good: 23900,
-      reject: 100,
+      input_plano: 24300, // Input diterima dari completing
+      potong_plano: 24300, // Realisasi potong: 24.300 plano
+      good_plano: 24000, // Hasil baik plano: 24.000 plano
+      reject_plano: 300, // Afval plano: 300 plano
+      up_per_plano: 4, // Input PPIC: 1 Plano isi 4 pcs
+      plan: 97200, // 24300 x 4 = 97.200 pcs
+      output: 97200, // 24300 x 4 = 97.200 pcs
+      good: 96000, // 24000 plano x 4 up = 96.000 pcs (konversi otomatis)
+      reject: 1200, // 300 plano x 4 up = 1.200 pcs (konversi otomatis)
       progress: 100.0
     },
     sortir: {
@@ -428,33 +437,48 @@ export const initialJobOrders = [
       opsi: 'Inspeksi Lipatan & Packing Kraft',
       status: 'selesai',
       unit: 'pcs',
-      plan: 23900,
-      s1: { output: 23900, good: 23700, reject: 200 },
-      s2: { output: 200, good: 180, reject: 20 },
+      plan: 96000, // Menerima hasil baik cabut (96.000 pcs)
+      s1: { output: 96000, good: 95200, reject: 800 },
+      s2: { output: 800, good: 720, reject: 80 },
       s3: { output: 0, good: 0, reject: 0 },
-      total_output: 24100,
-      total_good: 23880,
-      total_reject: 220,
+      total_output: 96800,
+      total_good: 95920,
+      total_reject: 880,
+      progress: 100.0
+    },
+    lipat: {
+      stage: 'Lipat',
+      tag: 'LPT',
+      mesin: 'Mesin Lipat Brosur Z-Fold',
+      operator: 'Sugeng',
+      opsi: 'Lipat Z-Fold 3 Lipatan',
+      status: 'selesai',
+      unit: 'pcs',
+      plan: 95920, // Menerima hasil baik sortir (95.920 pcs)
+      output: 95920,
+      good: 95500,
+      reject: 420,
       progress: 100.0
     }
   },
   {
     id: 6,
-    no_pp: 'PP-2026-0835',
-    produk_nama: 'Custom Rigid Box Gift Set',
+    no_pp: 'PP-2026-0836',
+    produk_nama: 'Packaging Kosmetik Wardah Series Exclusive',
     status: 'req',
     plan_total: 15000,
     plan_unit: 'plano',
+    up_per_plano: 6, // Input PPIC: 1 Plano isi 6 pcs
     alur_tipe: 'standar',
-    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Lipat ➜ Sortir ➜ Kirim)',
+    alur_label: 'Standar (Cetak ➜ Completing ➜ Cabut ➜ Sortir ➜ Lipat ➜ Kirim)',
     created_at: '2026-10-31',
-    last_update: '2026-10-31 09:00',
+    last_update: '2026-10-31 09:15',
     cetak: {
       stage: 'Cetak',
       tag: 'CTK',
-      mesin: 'SM 27 (Heidelberg)',
-      operator: 'Triyono',
-      opsi: 'Druk Greyboard & Linen Paper',
+      mesin: 'SM 23 (Heidelberg)',
+      operator: 'Slamet',
+      opsi: 'Druk Spot UV + Pearl Silver Ink',
       status: 'antri',
       unit: 'plano',
       plan: 15000,
@@ -466,9 +490,9 @@ export const initialJobOrders = [
     completing: {
       stage: 'Completing',
       tag: 'CMP',
-      mesin: 'Laminasi Transfer Hologram',
-      operator: 'Kuswanto',
-      opsi: 'Hologram Hot Foil Emboss',
+      mesin: 'Hot Stamping Foil 1 & UV Gloss',
+      operator: 'Wahyudi',
+      opsi: 'Embossing Logo & Hot Foil Hologram',
       status: 'antri',
       unit: 'plano',
       plan: 15000,
@@ -487,21 +511,11 @@ export const initialJobOrders = [
       input_unit: 'plano',
       unit: 'pcs',
       input_plano: 15000,
-      plan: 15000,
-      output: 0,
-      good: 0,
-      reject: 0,
-      progress: 0
-    },
-    lipat: {
-      stage: 'Lipat',
-      tag: 'LPT',
-      mesin: 'Herui Speed Gluer',
-      operator: 'Sugeng',
-      opsi: 'Manual Gluing & Box Wrapping',
-      status: 'antri',
-      unit: 'pcs',
-      plan: 15000,
+      potong_plano: 0,
+      good_plano: 0,
+      reject_plano: 0,
+      up_per_plano: 6,
+      plan: 90000, // 15000 x 6
       output: 0,
       good: 0,
       reject: 0,
@@ -515,13 +529,27 @@ export const initialJobOrders = [
       opsi: 'Inspeksi Presisi Cover & Dimensi',
       status: 'antri',
       unit: 'pcs',
-      plan: 15000,
+      plan: 90000,
       s1: { output: 0, good: 0, reject: 0 },
       s2: { output: 0, good: 0, reject: 0 },
       s3: { output: 0, good: 0, reject: 0 },
       total_output: 0,
       total_good: 0,
       total_reject: 0,
+      progress: 0
+    },
+    lipat: {
+      stage: 'Lipat',
+      tag: 'LPT',
+      mesin: 'Herui Speed Gluer',
+      operator: 'Sugeng',
+      opsi: 'Manual Gluing & Box Wrapping',
+      status: 'antri',
+      unit: 'pcs',
+      plan: 90000,
+      output: 0,
+      good: 0,
+      reject: 0,
       progress: 0
     }
   }

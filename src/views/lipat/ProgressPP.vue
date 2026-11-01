@@ -90,7 +90,7 @@
           <!-- Production Numbers -->
           <div class="stage-metrics">
             <div class="metric-item">
-              <span class="div-eyebrow">Input Diterima</span>
+              <span class="div-eyebrow">Input dari Sortir</span>
               <b>{{ formatNumber(item.lipat.plan) }} <small>pcs</small></b>
             </div>
             <div class="metric-item">
@@ -123,10 +123,10 @@
           <div class="pipeline-title">
             <span>🔗 Status Alur Antar Divisi:</span>
             <small v-if="item.lipat.good > 0" class="pipeline-note">
-              Box Good Lipat ({{ formatNumber(item.lipat.good) }} pcs) siap diteruskan ke tahap berikutnya
+              Box Good Lipat ({{ formatNumber(item.lipat.good) }} pcs) siap dikirim ke Gudang Jadi / Ekspedisi
             </small>
             <small v-else-if="item.lipat.status === 'lewati'" class="pipeline-note">
-              Produk lembaran tidak memerlukan proses pengeleman
+              Produk lembaran tidak memerlukan proses pengeleman &bull; Dikirim dalam bentuk flat sheet
             </small>
           </div>
           <div class="pipeline-steps">
@@ -151,26 +151,26 @@
             <div
               class="pipe-step"
               :class="{
-                current: item.lipat.status !== 'lewati',
-                skip: item.lipat.status === 'lewati'
-              }"
-            >
-              <span class="step-num">4</span>
-              <span class="step-name">Lipat (Pcs)</span>
-              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
-            </div>
-            <div class="pipe-arrow">➜</div>
-            <div
-              class="pipe-step"
-              :class="{
                 done: item.sortir.status === 'selesai',
                 active: item.sortir.status === 'proses',
                 skip: item.sortir.status === 'lewati'
               }"
             >
-              <span class="step-num">5</span>
+              <span class="step-num">4</span>
               <span class="step-name">Sortir (Pcs)</span>
               <span class="step-status">{{ item.sortir.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.sortir.status) }}</span>
+            </div>
+            <div class="pipe-arrow">➜</div>
+            <div
+              class="pipe-step"
+              :class="{
+                current: item.lipat.status !== 'lewati',
+                skip: item.lipat.status === 'lewati'
+              }"
+            >
+              <span class="step-num">5</span>
+              <span class="step-name">Lipat (Pcs)</span>
+              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
             </div>
           </div>
         </div>

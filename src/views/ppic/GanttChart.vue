@@ -33,8 +33,8 @@
             <option value="cetak">Cetak (Plano)</option>
             <option value="completing">Completing (Plano)</option>
             <option value="cabut">Cabut (Pcs)</option>
-            <option value="lipat">Lipat (Pcs)</option>
             <option value="sortir">Sortir (Pcs)</option>
+            <option value="lipat">Lipat (Pcs)</option>
           </select>
         </div>
 

@@ -85,37 +85,41 @@
             ></div>
           </div>
 
-          <!-- Production Numbers (Input Plano -> Output Pcs) -->
+          <!-- Production Numbers (Input Plano -> Output Pcs Konversi Otomatis) -->
           <div class="stage-metrics">
             <div class="metric-item">
               <span class="div-eyebrow">Input dari Completing</span>
               <b>{{ formatNumber(item.cabut.input_plano) }} <small>plano</small></b>
             </div>
             <div class="metric-item">
-              <span class="div-eyebrow">Realisasi Potong</span>
-              <b>{{ formatNumber(item.cabut.output) }} <small>pcs</small></b>
+              <span class="div-eyebrow">Realisasi Potong (Plano)</span>
+              <b class="txt-brand">{{ formatNumber(item.cabut.potong_plano !== undefined ? item.cabut.potong_plano : item.cabut.input_plano) }} <small>plano</small></b>
+              <small class="txt-muted" style="font-size: 0.7rem;">Konversi: {{ formatNumber(item.cabut.output) }} pcs</small>
             </div>
             <div class="metric-item">
               <span class="div-eyebrow">Hasil Baik (Good Pcs)</span>
               <b class="txt-ok">{{ formatNumber(item.cabut.good) }} <small>pcs</small></b>
+              <small class="txt-muted" style="font-size: 0.7rem;">{{ formatNumber(item.cabut.good_plano) }} plano &times; {{ item.up_per_plano || 4 }} up</small>
             </div>
             <div class="metric-item">
-              <span class="div-eyebrow">Afval / Reject</span>
+              <span class="div-eyebrow">Afval / Reject (Pcs)</span>
               <b class="txt-bad">{{ formatNumber(item.cabut.reject) }} <small>pcs</small></b>
+              <small class="txt-muted" style="font-size: 0.7rem;">{{ formatNumber(item.cabut.reject_plano) }} plano &times; {{ item.up_per_plano || 4 }} up</small>
             </div>
             <div class="metric-item">
               <span class="div-eyebrow">Sisa Belum Dipon</span>
-              <b>{{ formatNumber(Math.max(0, item.cabut.plan - item.cabut.output)) }} <small>pcs</small></b>
+              <b>{{ formatNumber(Math.max(0, (item.cabut.input_plano - (item.cabut.potong_plano || 0)))) }} <small>plano</small></b>
+              <small class="txt-muted" style="font-size: 0.7rem;">PPIC: 1 Plano = {{ item.up_per_plano || 4 }} Pcs</small>
             </div>
           </div>
         </div>
 
-        <!-- Alur Terhubung ke Divisi Berikutnya (Pipeline Flow) -->
+        <!-- Alur Terhubung ke Divisi Berikutnya (Pipeline Flow: Cetak -> Completing -> Cabut -> Sortir -> Lipat) -->
         <div class="div-pipeline">
           <div class="pipeline-title">
             <span>🔗 Status Alur Antar Divisi:</span>
             <small v-if="item.cabut.good > 0" class="pipeline-note">
-              Hasil Baik Cabut ({{ formatNumber(item.cabut.good) }} pcs) siap diteruskan ke tahap berikutnya
+              Hasil Baik Cabut ({{ formatNumber(item.cabut.good) }} pcs) siap diteruskan ke Sortir (QC)
             </small>
           </div>
           <div class="pipeline-steps">
@@ -140,27 +144,27 @@
             <div
               class="pipe-step"
               :class="{
-                done: item.lipat.status === 'selesai',
-                active: item.lipat.status === 'proses',
-                skip: item.lipat.status === 'lewati'
-              }"
-            >
-              <span class="step-num">4</span>
-              <span class="step-name">Lipat (Pcs)</span>
-              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
-            </div>
-            <div class="pipe-arrow">➜</div>
-            <div
-              class="pipe-step"
-              :class="{
                 done: item.sortir.status === 'selesai',
                 active: item.sortir.status === 'proses',
                 skip: item.sortir.status === 'lewati'
               }"
             >
-              <span class="step-num">5</span>
+              <span class="step-num">4</span>
               <span class="step-name">Sortir (Pcs)</span>
               <span class="step-status">{{ item.sortir.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.sortir.status) }}</span>
+            </div>
+            <div class="pipe-arrow">➜</div>
+            <div
+              class="pipe-step"
+              :class="{
+                done: item.lipat.status === 'selesai',
+                active: item.lipat.status === 'proses',
+                skip: item.lipat.status === 'lewati'
+              }"
+            >
+              <span class="step-num">5</span>
+              <span class="step-name">Lipat (Pcs)</span>
+              <span class="step-status">{{ item.lipat.status === 'lewati' ? 'Dilewati' : getStatusLabel(item.lipat.status) }}</span>
             </div>
           </div>
         </div>
