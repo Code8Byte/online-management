@@ -48,6 +48,7 @@ import PpicLkhList from '../views/ppic/LkhList.vue'
 import PpicLkhForm from '../views/ppic/LkhForm.vue'
 import PpicMasterData from '../views/ppic/MasterData.vue'
 import PpicJadwal from '../views/ppic/Jadwal.vue'
+import PpicInputPp from '../views/ppic/InputPp.vue'
 
 // Shared & Operational Views
 import ProgressPP from '../views/ProgressPP.vue'
@@ -115,8 +116,9 @@ const routes = [
   // PPIC Division Routes
   { path: '/ppic/jadwal', component: PpicJadwal, meta: { requiresAuth: true } },
   { path: '/jadwal', redirect: '/ppic/jadwal', meta: { requiresAuth: true } },
+  { path: '/ppic/input-pp', component: PpicInputPp, meta: { requiresAuth: true } },
   { path: '/ppic/lkh', component: PpicLkhList, meta: { requiresAuth: true } },
-  { path: '/ppic/lkh/baru', component: PpicLkhForm, meta: { requiresAuth: true } },
+  { path: '/ppic/lkh/baru', redirect: '/ppic/input-pp', meta: { requiresAuth: true } },
   { path: '/ppic/master', component: PpicMasterData, meta: { requiresAuth: true } },
 
   // Shared Routes (Progress PP dapat dilihat semua departemen)
@@ -185,6 +187,10 @@ router.beforeEach((to, from, next) => {
       return
     }
     if (to.path === '/lkh/baru') {
+      if (validDiv === 'ppic') {
+        next({ path: '/ppic/input-pp', replace: true })
+        return
+      }
       next({ path: `/${validDiv}/lkh/baru`, replace: true })
       return
     }
@@ -201,6 +207,7 @@ router.afterEach((to) => {
   const titles = {
     '/ppic': 'PPIC & Penjadwalan Kapasitas • PT Pura Barutama Unit Offset',
     '/ppic/jadwal': 'Jadwal & Gantt Chart Kapasitas • PT Pura Barutama Unit Offset',
+    '/ppic/input-pp': 'Form Input PP Baru • PT Pura Barutama Unit Offset',
     '/cetak': 'Divisi Cetak • PT Pura Barutama Unit Offset',
     '/completing': 'Divisi Completing • PT Pura Barutama Unit Offset',
     '/cabut': 'Divisi Cabut • PT Pura Barutama Unit Offset',

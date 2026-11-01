@@ -39,26 +39,67 @@ export const masterMesinPPIC = [
 ]
 
 // ==========================================
-// 2. FORMULA KALKULATOR PLANO & KAPASITAS
+// 2. MASTER ARMADA LOGISTIK PENGIRIMAN
+// ==========================================
+export const masterArmadaLogistik = [
+  { id: 'engkel', nama: 'Truk Engkel Box (CDE)', kapasitas_pallet: 4, kapasitas_koli: 80, tonase_kg: 2200 },
+  { id: 'cdd', nama: 'Colt Diesel Double (CDD)', kapasitas_pallet: 10, kapasitas_koli: 200, tonase_kg: 4500 },
+  { id: 'cdd_long', nama: 'CDD Long Box 14 Pallet', kapasitas_pallet: 14, kapasitas_koli: 280, tonase_kg: 6000 },
+  { id: 'fuso', nama: 'Truk Fuso Berat 8 Ton', kapasitas_pallet: 18, kapasitas_koli: 400, tonase_kg: 10000 },
+  { id: 'wingbox', nama: 'Tronton Wingbox 24ft', kapasitas_pallet: 26, kapasitas_koli: 600, tonase_kg: 18000 }
+]
+
+// ==========================================
+// 3. UTILITY & FORMULA KALKULATOR JAM & MENIT
 // ==========================================
 export function calculatePlanoFromOplaag(oplaagPcs, upPerPlano, insheetPercent = 2) {
   const o = Number(oplaagPcs) || 0
   const u = Number(upPerPlano) || 1
   if (o <= 0 || u <= 0) {
-    return {
-      nettoPlano: 0,
-      insheetPlano: 0,
-      totalPlano: 0
-    }
+    return { nettoPlano: 0, insheetPlano: 0, totalPlano: 0 }
   }
   const nettoPlano = Math.ceil(o / u)
   const insheetPlano = Math.ceil(nettoPlano * (Number(insheetPercent || 2) / 100))
   const totalPlano = nettoPlano + insheetPlano
-  return {
-    nettoPlano,
-    insheetPlano,
-    totalPlano
-  }
+  return { nettoPlano, insheetPlano, totalPlano }
+}
+
+export function formatMinutesToHuman(minutes) {
+  const m = Math.max(0, Math.round(Number(minutes) || 0))
+  const jam = Math.floor(m / 60)
+  const sisaMenit = m % 60
+  if (jam === 0) return `${sisaMenit} Menit`
+  if (sisaMenit === 0) return `${jam} Jam`
+  return `${jam} Jam ${sisaMenit} Menit`
+}
+
+export function addMinutesToDateTime(dtStr, minutes) {
+  if (!dtStr) return '2026-11-01 08:00'
+  const clean = dtStr.replace(' ', 'T')
+  const dt = new Date(clean)
+  if (isNaN(dt.getTime())) return dtStr
+  dt.setMinutes(dt.getMinutes() + Number(minutes))
+  const pad = (n) => String(n).padStart(2, '0')
+  const yr = dt.getFullYear()
+  const mo = pad(dt.getMonth() + 1)
+  const dy = pad(dt.getDate())
+  const hr = pad(dt.getHours())
+  const mi = pad(dt.getMinutes())
+  return `${yr}-${mo}-${dy} ${hr}:${mi}`
+}
+
+export function diffMinutes(dtStartStr, dtEndStr) {
+  if (!dtStartStr || !dtEndStr) return 0
+  const dt1 = new Date(dtStartStr.replace(' ', 'T'))
+  const dt2 = new Date(dtEndStr.replace(' ', 'T'))
+  return Math.round((dt2.getTime() - dt1.getTime()) / (1000 * 60))
+}
+
+export function calculateEstimatedMinutes(quantity, speedJph) {
+  const q = Number(quantity) || 0
+  const s = Number(speedJph) || 1
+  const hours = q / s
+  return Math.max(15, Math.round(hours * 60))
 }
 
 export function calculateEstimatedDays(quantity, speedJph, workHoursPerDay = 16) {
@@ -74,483 +115,365 @@ export function calculateEstimatedDays(quantity, speedJph, workHoursPerDay = 16)
 }
 
 export function addDaysToDate(dateStr, daysToAdd) {
-  const [y, m, d] = dateStr.split('-').map(Number)
+  if (!dateStr) return '2026-11-01'
+  const [y, m, d] = dateStr.split(' ')[0].split('-').map(Number)
   const dt = new Date(y, m - 1, d)
   dt.setDate(dt.getDate() + Number(daysToAdd))
   const pad = (n) => String(n).padStart(2, '0')
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`
 }
 
+export function calculateJobLogistics({
+  oplaag_pcs,
+  pcs_per_koli = 500,
+  koli_per_pallet = 20,
+  berat_pcs_gram = 25,
+  armada_id = 'cdd',
+  lead_time_kirim_jam = 3
+}) {
+  const pcs = Number(oplaag_pcs) || 0
+  const perKoli = Math.max(1, Number(pcs_per_koli) || 500)
+  const totalKoli = Math.ceil(pcs / perKoli)
+  
+  const perPallet = Math.max(1, Number(koli_per_pallet) || 20)
+  const totalPallet = Math.ceil(totalKoli / perPallet)
+  
+  const beratPerPcs = Number(berat_pcs_gram) || 25
+  const totalBeratKg = Math.round((pcs * beratPerPcs) / 1000)
+  
+  const armada = masterArmadaLogistik.find(a => a.id === armada_id) || masterArmadaLogistik[1]
+  const ritase = Math.max(1, Math.ceil(totalPallet / armada.kapasitas_pallet))
+  
+  return {
+    totalKoli,
+    totalPallet,
+    totalBeratKg,
+    armada,
+    ritase,
+    leadTimeKirimJam: Number(lead_time_kirim_jam) || 3
+  }
+}
+
 // ==========================================
-// 3. JADWAL AWAL SEED SCHEDULES DENGAN AUTO-EXTEND
-// Alur: Cetak -> Completing -> Cabut -> Sortir -> Lipat
+// 4. JADWAL SEED DENGAN RINCIAN JAM & MENIT
 // ==========================================
 const baseSchedules = [
   // ----------------------------------------------------
-  // PP-2026-0815: Brosur Promosi Ekspor Quality
-  // Contoh Kasus Nyata: Realisasi Potong 24.300 Plano, 1 Plano isi 4 Pcs
-  // Konversi Hasil Baik: 24.000 x 4 = 96.000 Pcs, Reject: 300 x 4 = 1.200 Pcs
+  // PP-2026-0840: Kemasan Herbal 150ml (Box Luar)
+  // Masuk Cetak: 01 Nov 08:00 WIB, Selesai per tahap jam:menit
+  // Batas Kirim: 03 Nov 16:00 WIB, Muatan: 96.000 Pcs / 10 Pallet (CDD)
   // ----------------------------------------------------
   {
-    id: 501,
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
+    id: 8401,
+    no_pp: 'PP-2026-0840',
+    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
     stage: 'cetak',
     stage_num: 1,
     mesin_id: 'sm23',
     mesin_nama: 'SM 23 (Heidelberg Speedmaster 102)',
-    oplaag_pcs: 100000,
-    up_per_plano: 4,
-    plan_plano: 25000,
-    unit: 'plano',
-    plan_qty: 25000,
-    actual_output: 25200,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-20',
-    planned_end_date: '2026-10-23',
-    actual_end_date: '2026-10-23'
-  },
-  {
-    id: 502,
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
-    stage: 'completing',
-    stage_num: 2,
-    mesin_id: 'hsf1',
-    mesin_nama: 'Laminasi Doff & Spot UV',
-    oplaag_pcs: 100000,
-    up_per_plano: 4,
-    plan_plano: 24700,
-    unit: 'plano',
-    plan_qty: 24700,
-    actual_output: 24600,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-23',
-    planned_end_date: '2026-10-26',
-    actual_end_date: '2026-10-26'
-  },
-  {
-    id: 503,
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
-    stage: 'cabut',
-    stage_num: 3,
-    mesin_id: 'ms1',
-    mesin_nama: 'Bobst MS 1 (Die Plat 4 Up)',
-    oplaag_pcs: 100000,
+    oplaag_pcs: 96000,
     up_per_plano: 4,
     plan_plano: 24300,
-    potong_plano: 24300, // 24.300 plano dipotong
-    good_plano: 24000,
-    reject_plano: 300,
-    unit: 'pcs',
-    plan_qty: 97200, // 24.300 plano x 4 up = 97.200 pcs
-    actual_output: 97200,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-26',
-    planned_end_date: '2026-10-28',
-    actual_end_date: '2026-10-28'
-  },
-  {
-    id: 504,
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
-    stage: 'sortir',
-    stage_num: 4,
-    mesin_id: 'sortir_manual',
-    mesin_nama: 'Meja Sortir Manual Lini B',
-    oplaag_pcs: 100000,
-    up_per_plano: 4,
-    plan_plano: 24300,
-    unit: 'pcs',
-    plan_qty: 96000, // Menerima hasil baik cabut (96.000 pcs)
-    actual_output: 96800,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-28',
-    planned_end_date: '2026-10-29',
-    actual_end_date: '2026-10-29'
-  },
-  {
-    id: 505,
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
-    stage: 'lipat',
-    stage_num: 5,
-    mesin_id: 'gluer_ml1',
-    mesin_nama: 'Mesin Lipat Brosur Z-Fold',
-    oplaag_pcs: 100000,
-    up_per_plano: 4,
-    plan_plano: 24300,
-    unit: 'pcs',
-    plan_qty: 95920, // Menerima hasil baik sortir
-    actual_output: 95920,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-29',
-    planned_end_date: '2026-10-30',
-    actual_end_date: '2026-10-30'
-  },
-
-  // ----------------------------------------------------
-  // PP-2026-0821: Djarum 12 Super (Oplaag 200.000 pcs, 1 Plano isi 4 Up -> 50.000 plano)
-  // Alur: Cetak -> Completing -> Cabut -> Sortir -> Lipat
-  // ----------------------------------------------------
-  {
-    id: 101,
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
-    stage: 'cetak',
-    stage_num: 1,
-    mesin_id: 'sm23',
-    mesin_nama: 'SM 23 (Heidelberg Speedmaster 102)',
-    oplaag_pcs: 200000,
-    up_per_plano: 4,
-    plan_plano: 50000,
     unit: 'plano',
-    plan_qty: 50000,
-    actual_output: 49500,
-    progress: 99.0,
+    plan_qty: 24300,
+    actual_output: 24300,
+    progress: 100.0,
     status: 'selesai',
-    start_date: '2026-10-25',
-    planned_end_date: '2026-10-27',
-    actual_end_date: '2026-10-27'
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 08:00',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 10:52',
+    duration_minutes: 172,
+    actual_end_date: '2026-11-01 10:52',
+    deadline_datetime: '2026-11-03 16:00',
+    muatan_koli: 192,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
   {
-    id: 102,
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
+    id: 8402,
+    no_pp: 'PP-2026-0840',
+    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
     stage: 'completing',
     stage_num: 2,
     mesin_id: 'hsf1',
     mesin_nama: 'Hot Stamping Foil 1 & UV Gloss',
-    oplaag_pcs: 200000,
+    oplaag_pcs: 96000,
     up_per_plano: 4,
-    plan_plano: 48500,
+    plan_plano: 24000,
     unit: 'plano',
-    plan_qty: 48500,
-    actual_output: 45000,
-    progress: 92.8,
-    status: 'proses',
-    start_date: '2026-10-28',
-    planned_end_date: '2026-10-31',
-    actual_end_date: null
+    plan_qty: 24000,
+    actual_output: 24000,
+    progress: 100.0,
+    status: 'selesai',
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 11:20',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 16:40',
+    duration_minutes: 320,
+    actual_end_date: '2026-11-01 16:40',
+    deadline_datetime: '2026-11-03 16:00',
+    muatan_koli: 192,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
   {
-    id: 103,
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
+    id: 8403,
+    no_pp: 'PP-2026-0840',
+    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
     stage: 'cabut',
     stage_num: 3,
     mesin_id: 'ms1',
     mesin_nama: 'Bobst MS 1 (Die Plat 4 Up)',
-    oplaag_pcs: 200000,
+    oplaag_pcs: 96000,
     up_per_plano: 4,
-    plan_plano: 44200,
-    potong_plano: 38000,
-    good_plano: 37400,
-    reject_plano: 600,
-    unit: 'pcs',
-    plan_qty: 176800, // 44.200 x 4
-    actual_output: 152000,
-    progress: 86.0,
-    status: 'proses',
-    start_date: '2026-10-29',
-    planned_end_date: '2026-10-31', // Overdue -> Auto-Extend!
-    actual_end_date: null
+    plan_plano: 24000,
+    unit: 'plano',
+    plan_qty: 24000,
+    actual_output: 18000,
+    progress: 75.0,
+    status: 'in_progress',
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 17:10',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 21:10',
+    duration_minutes: 240,
+    actual_end_date: null,
+    deadline_datetime: '2026-11-03 16:00',
+    muatan_koli: 192,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
   {
-    id: 104,
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
+    id: 8404,
+    no_pp: 'PP-2026-0840',
+    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
     stage: 'sortir',
     stage_num: 4,
     mesin_id: 'sortir_fs500',
     mesin_nama: 'Focusight FS-500 Shark',
-    oplaag_pcs: 200000,
+    oplaag_pcs: 96000,
     up_per_plano: 4,
-    plan_plano: 44200,
+    plan_plano: 24000,
     unit: 'pcs',
-    plan_qty: 149600, // Dari good cabut
-    actual_output: 122000,
-    progress: 81.5,
-    status: 'proses',
-    start_date: '2026-10-30',
-    planned_end_date: '2026-10-31', // Overdue -> Auto-Extend!
-    actual_end_date: null
+    plan_qty: 96000,
+    actual_output: 0,
+    progress: 0.0,
+    status: 'antri',
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 21:30',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 23:54',
+    duration_minutes: 144,
+    actual_end_date: null,
+    deadline_datetime: '2026-11-03 16:00',
+    muatan_koli: 192,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
   {
-    id: 105,
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
+    id: 8405,
+    no_pp: 'PP-2026-0840',
+    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
     stage: 'lipat',
     stage_num: 5,
     mesin_id: 'gluer_herui',
     mesin_nama: 'Herui Speed Gluer',
-    oplaag_pcs: 200000,
+    oplaag_pcs: 96000,
     up_per_plano: 4,
-    plan_plano: 44200,
+    plan_plano: 24000,
     unit: 'pcs',
-    plan_qty: 119700, // Dari good sortir
-    actual_output: 100000,
-    progress: 83.5,
-    status: 'proses',
-    start_date: '2026-10-31',
+    plan_qty: 96000,
+    actual_output: 0,
+    progress: 0.0,
+    status: 'antri',
+    start_date: '2026-11-02',
+    start_datetime: '2026-11-02 07:30',
     planned_end_date: '2026-11-02',
-    actual_end_date: null
+    planned_end_datetime: '2026-11-02 10:15',
+    duration_minutes: 165,
+    actual_end_date: null,
+    deadline_datetime: '2026-11-03 16:00',
+    muatan_koli: 192,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
 
   // ----------------------------------------------------
-  // PP-2026-0824: Box Farmasi Kalbe (Oplaag 160.000 pcs, 1 Plano isi 4 pcs -> 40.000 plano)
-  // Alur: Cetak -> Completing -> Cabut -> Sortir -> Lipat
+  // PP-2026-0841: Box Ampul Farmasi 10ml
+  // Masuk Mesin: 01 Nov 13:00 WIB, Batas Kirim: 02 Nov 17:00 WIB
   // ----------------------------------------------------
   {
-    id: 201,
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    stage: 'cetak',
-    stage_num: 1,
-    mesin_id: 'sm25',
-    mesin_nama: 'SM 25 (Heidelberg CD 102)',
-    oplaag_pcs: 160000,
-    up_per_plano: 4,
-    plan_plano: 40000,
-    unit: 'plano',
-    plan_qty: 40000,
-    actual_output: 40200,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-26',
-    planned_end_date: '2026-10-28',
-    actual_end_date: '2026-10-28'
-  },
-  {
-    id: 202,
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    stage: 'completing',
-    stage_num: 2,
-    mesin_id: 'uv_obat',
-    mesin_nama: 'Varnish UV Gloss Obat Pharma',
-    oplaag_pcs: 160000,
-    up_per_plano: 4,
-    plan_plano: 39500,
-    unit: 'plano',
-    plan_qty: 39500,
-    actual_output: 39200,
-    progress: 99.2,
-    status: 'selesai',
-    start_date: '2026-10-28',
-    planned_end_date: '2026-10-29',
-    actual_end_date: '2026-10-29'
-  },
-  {
-    id: 203,
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    stage: 'cabut',
-    stage_num: 3,
-    mesin_id: 'ms2',
-    mesin_nama: 'Bobst MS 2 Presisi',
-    oplaag_pcs: 160000,
-    up_per_plano: 4,
-    plan_plano: 38800,
-    potong_plano: 38800,
-    good_plano: 38200,
-    reject_plano: 600,
-    unit: 'pcs',
-    plan_qty: 155200,
-    actual_output: 155200,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-10-29',
-    planned_end_date: '2026-10-30',
-    actual_end_date: '2026-10-30'
-  },
-  {
-    id: 204,
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    stage: 'sortir',
-    stage_num: 4,
-    mesin_id: 'sortir_fs600',
-    mesin_nama: 'Focusight FS-600 Sheet',
-    oplaag_pcs: 160000,
-    up_per_plano: 4,
-    plan_plano: 38200,
-    unit: 'pcs',
-    plan_qty: 152800,
-    actual_output: 142000,
-    progress: 92.9,
-    status: 'proses',
-    start_date: '2026-10-30',
-    planned_end_date: '2026-10-31', // Overdue -> Auto-Extend!
-    actual_end_date: null
-  },
-  {
-    id: 205,
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    stage: 'lipat',
-    stage_num: 5,
-    mesin_id: 'gluer_ml2',
-    mesin_nama: 'Mesin Lipat 2 Straight Line',
-    oplaag_pcs: 160000,
-    up_per_plano: 4,
-    plan_plano: 34920,
-    unit: 'pcs',
-    plan_qty: 139680,
-    actual_output: 112000,
-    progress: 80.2,
-    status: 'proses',
-    start_date: '2026-10-31',
-    planned_end_date: '2026-11-02',
-    actual_end_date: null
-  },
-
-  // ----------------------------------------------------
-  // PP-2026-0828: Outer Corrugated Box (Oplaag 120.000 pcs, 1 Plano isi 2 pcs -> 60.000 plano)
-  // Alur: Cetak -> Completing -> Cabut -> Sortir (Tanpa Lipat)
-  // ----------------------------------------------------
-  {
-    id: 301,
-    no_pp: 'PP-2026-0828',
-    produk_nama: 'Outer Corrugated Box Indofood Flat Sheet',
+    id: 8411,
+    no_pp: 'PP-2026-0841',
+    produk_nama: 'Box Ampul Farmasi 10ml',
     stage: 'cetak',
     stage_num: 1,
     mesin_id: 'kba106',
     mesin_nama: 'KBA Rapida 106 High Speed',
-    oplaag_pcs: 120000,
-    up_per_plano: 2,
-    plan_plano: 60000,
+    oplaag_pcs: 100000,
+    up_per_plano: 6,
+    plan_plano: 17000,
     unit: 'plano',
-    plan_qty: 60000,
-    actual_output: 59800,
-    progress: 99.7,
+    plan_qty: 17000,
+    actual_output: 17000,
+    progress: 100.0,
     status: 'selesai',
-    start_date: '2026-10-27',
-    planned_end_date: '2026-10-29',
-    actual_end_date: '2026-10-29'
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 11:30',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 13:12',
+    duration_minutes: 102,
+    actual_end_date: '2026-11-01 13:12',
+    deadline_datetime: '2026-11-02 17:00',
+    muatan_koli: 200,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   },
   {
-    id: 302,
-    no_pp: 'PP-2026-0828',
-    produk_nama: 'Outer Corrugated Box Indofood Flat Sheet',
-    stage: 'completing',
-    stage_num: 2,
-    mesin_id: 'lam_flute',
-    mesin_nama: 'Laminasi Flute E/F Corrugated',
-    oplaag_pcs: 120000,
-    up_per_plano: 2,
-    plan_plano: 58500,
-    unit: 'plano',
-    plan_qty: 58500,
-    actual_output: 45000,
-    progress: 76.9,
-    status: 'proses',
-    start_date: '2026-10-29',
-    planned_end_date: '2026-10-31', // Overdue -> Auto-Extend!
-    actual_end_date: null
-  },
-  {
-    id: 303,
-    no_pp: 'PP-2026-0828',
-    produk_nama: 'Outer Corrugated Box Indofood Flat Sheet',
+    id: 8412,
+    no_pp: 'PP-2026-0841',
+    produk_nama: 'Box Ampul Farmasi 10ml',
     stage: 'cabut',
+    stage_num: 2,
+    mesin_id: 'ms2',
+    mesin_nama: 'Bobst MS 2 Presisi',
+    oplaag_pcs: 100000,
+    up_per_plano: 6,
+    plan_plano: 16800,
+    unit: 'plano',
+    plan_qty: 16800,
+    actual_output: 16800,
+    progress: 100.0,
+    status: 'selesai',
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 13:40',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 16:15',
+    duration_minutes: 155,
+    actual_end_date: '2026-11-01 16:15',
+    deadline_datetime: '2026-11-02 17:00',
+    muatan_koli: 200,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
+  },
+  {
+    id: 8413,
+    no_pp: 'PP-2026-0841',
+    produk_nama: 'Box Ampul Farmasi 10ml',
+    stage: 'sortir',
     stage_num: 3,
-    mesin_id: 'ms3',
-    mesin_nama: 'Bobst MS 3 Double Crease',
-    oplaag_pcs: 120000,
-    up_per_plano: 2,
-    plan_plano: 44200,
-    potong_plano: 0,
-    good_plano: 0,
-    reject_plano: 0,
+    mesin_id: 'sortir_fs600',
+    mesin_nama: 'Focusight FS-600 Sheet',
+    oplaag_pcs: 100000,
+    up_per_plano: 6,
+    plan_plano: 16800,
     unit: 'pcs',
-    plan_qty: 88400,
+    plan_qty: 100000,
+    actual_output: 60000,
+    progress: 60.0,
+    status: 'in_progress',
+    start_date: '2026-11-01',
+    start_datetime: '2026-11-01 16:45',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 19:36',
+    duration_minutes: 171,
+    actual_end_date: null,
+    deadline_datetime: '2026-11-02 17:00',
+    muatan_koli: 200,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
+  },
+  {
+    id: 8414,
+    no_pp: 'PP-2026-0841',
+    produk_nama: 'Box Ampul Farmasi 10ml',
+    stage: 'lipat',
+    stage_num: 4,
+    mesin_id: 'gluer_ml1',
+    mesin_nama: 'Mesin Lipat 1 Crash Lock',
+    oplaag_pcs: 100000,
+    up_per_plano: 6,
+    plan_plano: 16800,
+    unit: 'pcs',
+    plan_qty: 100000,
     actual_output: 0,
-    progress: 0,
+    progress: 0.0,
     status: 'antri',
     start_date: '2026-11-01',
-    planned_end_date: '2026-11-03',
-    actual_end_date: null
-  },
-  {
-    id: 304,
-    no_pp: 'PP-2026-0828',
-    produk_nama: 'Outer Corrugated Box Indofood Flat Sheet',
-    stage: 'sortir',
-    stage_num: 4,
-    mesin_id: 'sortir_raptor',
-    mesin_nama: 'Luster Raptor Optical',
-    oplaag_pcs: 120000,
-    up_per_plano: 2,
-    plan_plano: 44200,
-    unit: 'pcs',
-    plan_qty: 88400,
-    actual_output: 0,
-    progress: 0,
-    status: 'antri',
-    start_date: '2026-11-03',
-    planned_end_date: '2026-11-04',
-    actual_end_date: null
+    start_datetime: '2026-11-01 20:00',
+    planned_end_date: '2026-11-01',
+    planned_end_datetime: '2026-11-01 23:20',
+    duration_minutes: 200,
+    actual_end_date: null,
+    deadline_datetime: '2026-11-02 17:00',
+    muatan_koli: 200,
+    muatan_pallet: 10,
+    armada: 'Colt Diesel Double (CDD)',
+    ritase: 1
   }
 ]
 
 // ==========================================
-// 4. REACTIVE STATE & AUTO-EXTEND EVALUATION
+// 5. REACTIVE STATE & AUTO-EXTEND EVALUATION
 // ==========================================
 export const schedulesState = ref([...baseSchedules])
 
-// Tanggal referensi sistem (Hari ini: 2026-11-01)
+// Tanggal & Jam referensi sistem (Hari ini: 01 Nov 2026 jam 17:00 WIB)
 export const CURRENT_SYSTEM_DATE = '2026-11-01'
+export const CURRENT_SYSTEM_DATETIME = '2026-11-01 17:00'
 
 /**
- * Memproses Auto-Extend secara otomatis pada task yang molor / belum selesai
+ * Memproses evaluasi timeline per jam & auto-extend per menit
  */
 export const evaluatedSchedules = computed(() => {
   return schedulesState.value.map(task => {
     const isCompleted = task.status === 'selesai' || task.progress >= 100
     const isSkipped = task.status === 'lewati'
     
-    // Periksa apakah planned_end_date sudah terlewati atau hari ini
-    const isOverdue = task.planned_end_date <= CURRENT_SYSTEM_DATE
+    // Periksa apakah waktu deadline rencana terlewati
+    const endDateTime = task.planned_end_datetime || (task.planned_end_date + ' 23:59')
+    const isOverdue = endDateTime <= CURRENT_SYSTEM_DATETIME
     
     if (!isCompleted && !isSkipped && isOverdue) {
-      // Hitung kekurangan output
       const remaining = Math.max(0, (task.plan_qty || 0) - (task.actual_output || 0))
-      
-      // Ambil kapasitas mesin per hari
       const machine = masterMesinPPIC.find(m => m.id === task.mesin_id)
-      const dailyCap = machine ? machine.speed_jph * machine.jam_hari : 100000
+      const speed = machine ? machine.speed_jph : 10000
       
-      // Hitung perpanjangan hari yang dibutuhkan
-      const neededExtraDays = Math.max(1, Math.ceil(remaining / dailyCap))
-      const extendedEndDate = addDaysToDate(CURRENT_SYSTEM_DATE, neededExtraDays)
+      // Hitung perpanjangan menit yang dibutuhkan secara presisi
+      const neededExtraMinutes = Math.max(30, Math.round((remaining / speed) * 60))
+      const extendedDateTime = addMinutesToDateTime(CURRENT_SYSTEM_DATETIME, neededExtraMinutes)
       
       return {
         ...task,
         is_extended: true,
-        extend_days: neededExtraDays,
-        effective_end_date: extendedEndDate,
-        extend_reason: `Progress ${task.progress.toFixed(1)}% (kurang ${Number(remaining).toLocaleString('id-ID')} ${task.unit}). Otomatis extend +${neededExtraDays} hari s/d ${extendedEndDate}.`
+        extend_minutes: neededExtraMinutes,
+        effective_end_datetime: extendedDateTime,
+        effective_end_date: extendedDateTime.split(' ')[0],
+        extend_reason: `Progress ${task.progress.toFixed(1)}% (kurang ${Number(remaining).toLocaleString('id-ID')} ${task.unit}). Auto-extend +${formatMinutesToHuman(neededExtraMinutes)} s/d ${extendedDateTime} WIB.`
       }
     }
     
     return {
       ...task,
       is_extended: false,
-      extend_days: 0,
+      extend_minutes: 0,
+      effective_end_datetime: task.planned_end_datetime || (task.planned_end_date + ' 23:59'),
       effective_end_date: task.planned_end_date
     }
   })
 })
 
 /**
- * Menambah Job Order & Rangkaian Jadwal Otomatis dari Form Input PPIC
+ * Menambah Job Order & Rangkaian Jadwal Presisi (Jam & Menit) dari Form Input PPIC
  */
 export function addPpicJobOrderSchedule(payload) {
   const {
@@ -559,7 +482,14 @@ export function addPpicJobOrderSchedule(payload) {
     oplaag_pcs,
     up_per_plano,
     insheet_percent,
-    start_date,
+    start_datetime, // "YYYY-MM-DD HH:mm"
+    deadline_date,  // "YYYY-MM-DD"
+    deadline_time,  // "HH:mm"
+    pcs_per_koli,
+    koli_per_pallet,
+    berat_pcs_gram,
+    armada_id,
+    lead_time_kirim_jam,
     stages // Array of stage config: { stage, mesin_id, enabled }
   } = payload
 
@@ -567,24 +497,34 @@ export function addPpicJobOrderSchedule(payload) {
   const calc = calculatePlanoFromOplaag(oplaag_pcs, up_per_plano, insheet_percent)
   const totalPlano = calc.totalPlano
 
-  let currentDate = start_date || CURRENT_SYSTEM_DATE
+  // 2. Kalkulasi Muatan Logistik Pengiriman
+  const logistics = calculateJobLogistics({
+    oplaag_pcs,
+    pcs_per_koli,
+    koli_per_pallet,
+    berat_pcs_gram,
+    armada_id,
+    lead_time_kirim_jam
+  })
+
+  const deadlineDateTime = `${deadline_date} ${deadline_time || '17:00'}`
+  let currentDateTime = start_datetime || `${CURRENT_SYSTEM_DATE} 08:00`
   const newTasks = []
   let nextId = Date.now()
 
-  // 2. Loop tahapan produksi berurutan (cascade jadwal otomatis)
+  // 3. Loop tahapan produksi berurutan (cascade jadwal per jam & menit)
   stages.forEach((st, idx) => {
     if (!st.enabled) return
 
     const machine = masterMesinPPIC.find(m => m.id === st.mesin_id)
     if (!machine) return
 
-    // Tentukan kuota proses
     const isPlanoStage = machine.unit === 'plano'
     const stageQty = isPlanoStage ? totalPlano : Number(oplaag_pcs)
 
-    // Hitung durasi hari kerja berdasarkan kapasitas mesin
-    const dur = calculateEstimatedDays(stageQty, machine.speed_jph, machine.jam_hari)
-    const plannedEndDate = addDaysToDate(currentDate, dur.days)
+    // Hitung durasi presisi menit
+    const durationMinutes = calculateEstimatedMinutes(stageQty, machine.speed_jph)
+    const endDateTime = addMinutesToDateTime(currentDateTime, durationMinutes)
 
     newTasks.push({
       id: nextId++,
@@ -602,16 +542,29 @@ export function addPpicJobOrderSchedule(payload) {
       actual_output: 0,
       progress: 0,
       status: 'antri',
-      start_date: currentDate,
-      planned_end_date: plannedEndDate,
-      actual_end_date: null
+      start_date: currentDateTime.split(' ')[0],
+      start_datetime: currentDateTime,
+      planned_end_date: endDateTime.split(' ')[0],
+      planned_end_datetime: endDateTime,
+      duration_minutes: durationMinutes,
+      actual_end_date: null,
+      deadline_datetime: deadlineDateTime,
+      muatan_koli: logistics.totalKoli,
+      muatan_pallet: logistics.totalPallet,
+      armada: logistics.armada.nama,
+      ritase: logistics.ritase
     })
 
-    // Tanggal proses berikutnya dimulai setelah proses ini selesai
-    currentDate = plannedEndDate
+    // Beri jeda/buffer setup 20 menit ke proses berikutnya
+    currentDateTime = addMinutesToDateTime(endDateTime, 20)
   })
 
-  // Simpan ke state
+  // Simpan ke state teratas
   schedulesState.value.unshift(...newTasks)
-  return newTasks
+  return {
+    tasks: newTasks,
+    logistics,
+    deadlineDateTime,
+    finalEndDateTime: currentDateTime
+  }
 }

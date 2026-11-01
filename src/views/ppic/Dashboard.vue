@@ -58,55 +58,24 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Header & Quick Actions -->
     <div class="tabs-container">
       <div class="nav-tabs">
-        <button
-          type="button"
-          class="tab-btn"
-          :class="{ active: activeTab === 'gantt' }"
-          @click="activeTab = 'gantt'"
-        >
-          <span>📊</span> Gantt Chart Kapasitas &amp; Jadwal Mesin
-        </button>
-        <button
-          type="button"
-          class="tab-btn"
-          :class="{ active: activeTab === 'form' }"
-          @click="activeTab = 'form'"
-        >
-          <span>✍️</span> Form Input PPIC &amp; Kalkulator Plano
-        </button>
+        <div class="tab-btn active">
+          <span>📊</span> Gantt Chart Kapasitas &amp; Jadwal Mesin (Per Jam &bull; Presisi Menit)
+        </div>
       </div>
 
       <div class="tabs-actions">
-        <button
-          v-if="activeTab === 'gantt'"
-          type="button"
-          class="btn-new-job"
-          @click="activeTab = 'form'"
-        >
-          <span>➕</span> Input PP Baru
-        </button>
-        <button
-          v-else
-          type="button"
-          class="btn-back-gantt"
-          @click="activeTab = 'gantt'"
-        >
-          <span>📊</span> Lihat Gantt Chart
-        </button>
+        <router-link to="/ppic/input-pp" class="btn-new-job" style="text-decoration: none;">
+          <span>✍️</span> + Input PP Baru
+        </router-link>
       </div>
     </div>
 
-    <!-- Tab View: Gantt Chart -->
-    <div v-show="activeTab === 'gantt'" class="tab-content">
+    <!-- View: Gantt Chart -->
+    <div class="tab-content">
       <GanttChart ref="ganttRef" />
-    </div>
-
-    <!-- Tab View: Input Form & Plano Calculator -->
-    <div v-show="activeTab === 'form'" class="tab-content">
-      <ScheduleForm @schedule-created="onScheduleCreated" />
     </div>
   </div>
 </template>
@@ -114,7 +83,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import GanttChart from './GanttChart.vue'
-import ScheduleForm from './ScheduleForm.vue'
 import {
   masterMesinPPIC,
   evaluatedSchedules,
@@ -122,7 +90,6 @@ import {
 } from '../../data/schedulePPIC'
 import { formatNumber } from '../../data/progressPP'
 
-const activeTab = ref('gantt')
 const ganttRef = ref(null)
 
 // Total unique PP

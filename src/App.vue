@@ -32,8 +32,11 @@
             <span>📋</span> Data LKH
           </router-link>
 
-          <!-- Form Isi LKH spesifik divisi pengguna aktif -->
-          <router-link :to="'/' + userDivisi + '/lkh/baru'" class="nav-link">
+          <!-- Form Input PP Baru (Khusus PPIC) / Isi LKH (Divisi Lain) -->
+          <router-link v-if="userDivisi === 'ppic'" to="/ppic/input-pp" class="nav-link">
+            <span>✍️</span> Input PP Baru
+          </router-link>
+          <router-link v-else :to="'/' + userDivisi + '/lkh/baru'" class="nav-link">
             <span>✍️</span> Isi LKH
           </router-link>
 
@@ -111,7 +114,12 @@
         <span class="bottom-nav-icon">📋</span>
         <span>Data LKH</span>
       </router-link>
-      <router-link :to="'/' + userDivisi + '/lkh/baru'" class="bottom-nav-item">
+      <!-- Form Input PP Baru (Khusus PPIC) / Isi LKH (Divisi Lain) -->
+      <router-link v-if="userDivisi === 'ppic'" to="/ppic/input-pp" class="bottom-nav-item">
+        <span class="bottom-nav-icon">✍️</span>
+        <span>Input PP</span>
+      </router-link>
+      <router-link v-else :to="'/' + userDivisi + '/lkh/baru'" class="bottom-nav-item">
         <span class="bottom-nav-icon">✍️</span>
         <span>Isi LKH</span>
       </router-link>
@@ -156,6 +164,7 @@ const dashboardRoute = computed(() => {
 const currentHeaderTitle = computed(() => {
   const p = route.path
   if (p === '/ppic') return 'PPIC'
+  if (p === '/ppic/input-pp') return 'Input PP Baru'
   if (p === '/ppic/jadwal' || p === '/jadwal') return 'Jadwal & Kapasitas'
   if (p.startsWith('/cetak')) return 'Divisi Cetak'
   if (p.startsWith('/completing')) return 'Divisi Completing'
