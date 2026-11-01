@@ -568,3 +568,46 @@ export function addPpicJobOrderSchedule(payload) {
     finalEndDateTime: currentDateTime
   }
 }
+
+/**
+ * Memperbarui Data Job Order (PP) secara terpusat
+ */
+export function updatePpicJobOrder(updatedPP) {
+  const {
+    no_pp,
+    produk_nama,
+    oplaag_pcs,
+    up_per_plano,
+    start_datetime,
+    deadline_datetime,
+    muatan_koli,
+    muatan_pallet,
+    armada,
+    ritase
+  } = updatedPP
+
+  schedulesState.value = schedulesState.value.map(task => {
+    if (task.no_pp === no_pp) {
+      return {
+        ...task,
+        produk_nama: produk_nama !== undefined ? produk_nama : task.produk_nama,
+        oplaag_pcs: oplaag_pcs !== undefined ? Number(oplaag_pcs) : task.oplaag_pcs,
+        up_per_plano: up_per_plano !== undefined ? Number(up_per_plano) : task.up_per_plano,
+        start_datetime: start_datetime !== undefined ? start_datetime : task.start_datetime,
+        deadline_datetime: deadline_datetime !== undefined ? deadline_datetime : task.deadline_datetime,
+        muatan_koli: muatan_koli !== undefined ? muatan_koli : task.muatan_koli,
+        muatan_pallet: muatan_pallet !== undefined ? muatan_pallet : task.muatan_pallet,
+        armada: armada !== undefined ? armada : task.armada,
+        ritase: ritase !== undefined ? ritase : task.ritase
+      }
+    }
+    return task
+  })
+}
+
+/**
+ * Menghapus Job Order (PP) dari jadwal
+ */
+export function deletePpicJobOrder(no_pp) {
+  schedulesState.value = schedulesState.value.filter(task => task.no_pp !== no_pp)
+}

@@ -49,6 +49,7 @@ import PpicLkhForm from '../views/ppic/LkhForm.vue'
 import PpicMasterData from '../views/ppic/MasterData.vue'
 import PpicJadwal from '../views/ppic/Jadwal.vue'
 import PpicInputPp from '../views/ppic/InputPp.vue'
+import PpicDataPp from '../views/ppic/DataPp.vue'
 
 // Shared & Operational Views
 import ProgressPP from '../views/ProgressPP.vue'
@@ -117,9 +118,10 @@ const routes = [
   { path: '/ppic/jadwal', component: PpicJadwal, meta: { requiresAuth: true } },
   { path: '/jadwal', redirect: '/ppic/jadwal', meta: { requiresAuth: true } },
   { path: '/ppic/input-pp', component: PpicInputPp, meta: { requiresAuth: true } },
-  { path: '/ppic/lkh', component: PpicLkhList, meta: { requiresAuth: true } },
+  { path: '/ppic/pp', component: PpicDataPp, meta: { requiresAuth: true } },
+  { path: '/ppic/lkh', component: PpicDataPp, meta: { requiresAuth: true } },
   { path: '/ppic/lkh/baru', redirect: '/ppic/input-pp', meta: { requiresAuth: true } },
-  { path: '/ppic/master', component: PpicMasterData, meta: { requiresAuth: true } },
+  { path: '/ppic/master', redirect: '/ppic/pp', meta: { requiresAuth: true } },
 
   // Shared Routes (Progress PP dapat dilihat semua departemen)
   { path: '/progress', component: ProgressPP, meta: { requiresAuth: true } },
@@ -183,6 +185,10 @@ router.beforeEach((to, from, next) => {
     const validDiv = ['cetak', 'completing', 'cabut', 'lipat', 'sortir', 'ppic'].includes(div) ? div : 'sortir'
     
     if (to.path === '/lkh') {
+      if (validDiv === 'ppic') {
+        next({ path: '/ppic/pp', replace: true })
+        return
+      }
       next({ path: `/${validDiv}/lkh`, replace: true })
       return
     }
@@ -195,6 +201,10 @@ router.beforeEach((to, from, next) => {
       return
     }
     if (to.path === '/master') {
+      if (validDiv === 'ppic') {
+        next({ path: '/ppic/pp', replace: true })
+        return
+      }
       next({ path: `/${validDiv}/master`, replace: true })
       return
     }
@@ -206,6 +216,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   const titles = {
     '/ppic': 'PPIC & Penjadwalan Kapasitas • PT Pura Barutama Unit Offset',
+    '/ppic/pp': 'Data Job Order (PP) • PT Pura Barutama Unit Offset',
     '/ppic/jadwal': 'Jadwal & Gantt Chart Kapasitas • PT Pura Barutama Unit Offset',
     '/ppic/input-pp': 'Form Input PP Baru • PT Pura Barutama Unit Offset',
     '/cetak': 'Divisi Cetak • PT Pura Barutama Unit Offset',

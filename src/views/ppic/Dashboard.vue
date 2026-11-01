@@ -58,18 +58,12 @@
       </div>
     </div>
 
-    <!-- Navigation Header & Quick Actions -->
+    <!-- Navigation Header -->
     <div class="tabs-container">
       <div class="nav-tabs">
         <div class="tab-btn active">
           <span>📊</span> Gantt Chart Kapasitas &amp; Jadwal Mesin (Per Jam &bull; Presisi Menit)
         </div>
-      </div>
-
-      <div class="tabs-actions">
-        <router-link to="/ppic/input-pp" class="btn-new-job" style="text-decoration: none;">
-          <span>✍️</span> + Input PP Baru
-        </router-link>
       </div>
     </div>
 

@@ -27,8 +27,11 @@
             <span>📈</span> Progress PP
           </router-link>
 
-          <!-- Data LKH spesifik divisi pengguna aktif -->
-          <router-link :to="'/' + userDivisi + '/lkh'" class="nav-link">
+          <!-- Data PP (Khusus PPIC) / Data LKH (Divisi Lain) -->
+          <router-link v-if="userDivisi === 'ppic'" to="/ppic/pp" class="nav-link">
+            <span>📋</span> Data PP
+          </router-link>
+          <router-link v-else :to="'/' + userDivisi + '/lkh'" class="nav-link">
             <span>📋</span> Data LKH
           </router-link>
 
@@ -40,8 +43,8 @@
             <span>✍️</span> Isi LKH
           </router-link>
 
-          <!-- Master Data spesifik divisi pengguna aktif -->
-          <router-link :to="'/' + userDivisi + '/master'" class="nav-link">
+          <!-- Master Data spesifik divisi pengguna aktif (Kecuali PPIC) -->
+          <router-link v-if="userDivisi !== 'ppic'" :to="'/' + userDivisi + '/master'" class="nav-link">
             <span>⚙️</span> Master Data
           </router-link>
         </div>
@@ -110,7 +113,12 @@
         <span class="bottom-nav-icon">📈</span>
         <span>Progress</span>
       </router-link>
-      <router-link :to="'/' + userDivisi + '/lkh'" class="bottom-nav-item">
+      <!-- Data PP (Khusus PPIC) / Data LKH (Divisi Lain) -->
+      <router-link v-if="userDivisi === 'ppic'" to="/ppic/pp" class="bottom-nav-item">
+        <span class="bottom-nav-icon">📋</span>
+        <span>Data PP</span>
+      </router-link>
+      <router-link v-else :to="'/' + userDivisi + '/lkh'" class="bottom-nav-item">
         <span class="bottom-nav-icon">📋</span>
         <span>Data LKH</span>
       </router-link>
@@ -123,7 +131,7 @@
         <span class="bottom-nav-icon">✍️</span>
         <span>Isi LKH</span>
       </router-link>
-      <router-link :to="'/' + userDivisi + '/master'" class="bottom-nav-item">
+      <router-link v-if="userDivisi !== 'ppic'" :to="'/' + userDivisi + '/master'" class="bottom-nav-item">
         <span class="bottom-nav-icon">⚙️</span>
         <span>Master</span>
       </router-link>
@@ -164,6 +172,7 @@ const dashboardRoute = computed(() => {
 const currentHeaderTitle = computed(() => {
   const p = route.path
   if (p === '/ppic') return 'PPIC'
+  if (p === '/ppic/pp') return 'Data PP'
   if (p === '/ppic/input-pp') return 'Input PP Baru'
   if (p === '/ppic/jadwal' || p === '/jadwal') return 'Jadwal & Kapasitas'
   if (p.startsWith('/cetak')) return 'Divisi Cetak'

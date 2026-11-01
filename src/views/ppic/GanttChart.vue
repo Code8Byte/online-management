@@ -1,9 +1,8 @@
 <template>
   <div class="gantt-shell">
-    <!-- Top Controls Bar -->
-    <div class="gantt-controls-card">
-      <div class="controls-row">
-        <!-- View Grouping Switcher -->
+    <!-- Compact Top Bar with Show/Hide Filter Toggle -->
+    <div class="gantt-top-bar">
+      <div class="d-flex align-center gap-08 flex-wrap">
         <div class="seg-btn-group">
           <button
             type="button"
@@ -23,6 +22,31 @@
           </button>
         </div>
 
+        <div class="active-filter-summary">
+          <span>Rentang: <b>{{ selectedDayRange === 'today' ? 'Hari Ini' : selectedDayRange === '3days' ? '3 Hari' : '5 Hari' }}</b></span>
+          <span>&bull;</span>
+          <span>Jam: <b>{{ selectedHourSpan === 'shifts' ? '07:00 - 23:00' : '24 Jam' }}</b></span>
+          <span v-if="filterStage">&bull; Tahap: <b class="badge-stage-summary">{{ filterStage.toUpperCase() }}</b></span>
+          <span v-if="filterExtendedOnly" class="badge-ext-summary">&bull; ⚠️ Auto-Extend Only</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="btn-toggle-filter"
+        :class="{ active: showFilter }"
+        @click="showFilter = !showFilter"
+        title="Klik untuk membuka / menutup opsi filter"
+      >
+        <span>🔍</span>
+        <span>{{ showFilter ? 'Tutup Filter' : 'Filter &amp; Opsi Tampilan' }}</span>
+        <span class="caret-icon">{{ showFilter ? '▲' : '▼' }}</span>
+      </button>
+    </div>
+
+    <!-- Collapsible Filter Drawer (Default: hidden, ditutup agar tidak memenuhi tampilan) -->
+    <div v-show="showFilter" class="gantt-controls-card">
+      <div class="controls-row">
         <!-- Filter Hari / Rentang Tanggal -->
         <div class="filter-item">
           <label>Rentang Tanggal:</label>
@@ -63,11 +87,6 @@
           <span>⚠️ Auto-Extend (Molor)</span>
           <span v-if="extendedTasksCount > 0" class="badge-count">{{ extendedTasksCount }}</span>
         </label>
-
-        <!-- Button to Dedicated Input PP Page -->
-        <router-link to="/ppic/input-pp" class="btn-input-new-pp">
-          <span>✍️</span> + Input PP Baru
-        </router-link>
       </div>
 
       <!-- Quick Legend Bar -->
@@ -379,6 +398,7 @@ const viewMode = ref('machine') // 'machine' | 'pp'
 const filterStage = ref('')
 const filterExtendedOnly = ref(false)
 const selectedTask = ref(null)
+const showFilter = ref(false) // Default: tertutup agar tidak memenuhi tampilan layar
 
 const selectedDayRange = ref('3days') // 'today' | '3days' | '5days'
 const selectedHourSpan = ref('shifts') // 'shifts' (07-23) | '24h' (00-24)
@@ -546,6 +566,65 @@ const getStageBadgeClass = (stage) => {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+/* Top Bar with Filter Toggle */
+.gantt-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.active-filter-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #475569;
+}
+.badge-stage-summary {
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+.badge-ext-summary {
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 0.74rem;
+}
+.btn-toggle-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-toggle-filter:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.btn-toggle-filter.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+.caret-icon {
+  font-size: 0.7rem;
 }
 
 /* Controls */
