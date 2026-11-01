@@ -85,7 +85,8 @@
                   v-model="item.jam_mulai" 
                   class="form-control font-bold" 
                   required 
-                  style="max-width: 280px; border-color: #93c5fd;" 
+                  style="max-width: 280px; border-color: #93c5fd; cursor: pointer; background: #fff;" 
+                  @click="$event.target.showPicker && $event.target.showPicker()"
                 />
                 <small class="text-muted">
                   Waktu peralihan mesin ke PP #{{ idx + 1 }} (antara {{ formatTimeSnippet(form.start) }} s/d {{ formatTimeSnippet(form.finish) }})

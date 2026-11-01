@@ -22,7 +22,7 @@
       <div class="grid grid-3 gap-1 mb-1">
         <div class="form-group">
           <label>Tanggal Produksi <span class="text-danger">*</span></label>
-          <input type="date" v-model="form.tanggal" class="form-control" required />
+          <input type="date" v-model="form.tanggal" class="form-control" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
         </div>
         <div class="form-group">
           <label>Shift Kerja <span class="text-danger">*</span></label>

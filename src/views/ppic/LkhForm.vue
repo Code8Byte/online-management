@@ -47,7 +47,7 @@
         </div>
         <div class="form-group">
           <label>Target Tanggal Selesai (Deadline) <span class="text-danger">*</span></label>
-          <input type="date" v-model="form.deadline" class="form-control" required />
+          <input type="date" v-model="form.deadline" class="form-control" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
         </div>
       </div>
 

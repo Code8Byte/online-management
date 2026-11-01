@@ -14,9 +14,9 @@
 
           <!-- Desktop: tanggal + shift + mesin -->
           <div class="dv-inline-fields desktop-only">
-            <input type="date" v-model="filter.start_date" class="dv-input" @change="activePreset = null" />
+            <input type="date" v-model="filter.start_date" class="dv-input" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" @change="activePreset = null" />
             <span class="dv-sep">&ndash;</span>
-            <input type="date" v-model="filter.end_date" class="dv-input" @change="activePreset = null" />
+            <input type="date" v-model="filter.end_date" class="dv-input" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" @change="activePreset = null" />
             <select v-model="filter.shift" class="dv-input">
               <option value="">Semua shift</option>
               <option value="1">Shift 1</option>
@@ -520,8 +520,8 @@
           <button type="button" class="dv-btn dv-btn-ghost" @click="showMobileFilterSheet = false">✕</button>
         </div>
         <div class="dv-sheet-body">
-          <div class="dv-field"><label>Tanggal mulai</label><input type="date" v-model="filter.start_date" class="dv-input" /></div>
-          <div class="dv-field"><label>Tanggal selesai</label><input type="date" v-model="filter.end_date" class="dv-input" /></div>
+          <div class="dv-field"><label>Tanggal mulai</label><input type="date" v-model="filter.start_date" class="dv-input" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
+          <div class="dv-field"><label>Tanggal selesai</label><input type="date" v-model="filter.end_date" class="dv-input" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
           <div class="dv-field">
             <label>Shift</label>
             <select v-model="filter.shift" class="dv-input">
@@ -566,8 +566,8 @@
         <p class="dv-muted dv-modal-desc">Laporan kerja harian sortir lengkap dengan downtime, detail cacat WIP, dan KPI OEE.</p>
         <form @submit.prevent="submitExportExcel('xlsx')">
           <div class="dv-form-grid">
-            <div class="dv-field"><label>Tanggal mulai *</label><input type="date" v-model="formExport.start_date" class="dv-input" required /></div>
-            <div class="dv-field"><label>Tanggal selesai *</label><input type="date" v-model="formExport.end_date" class="dv-input" required /></div>
+            <div class="dv-field"><label>Tanggal mulai *</label><input type="date" v-model="formExport.start_date" class="dv-input" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
+            <div class="dv-field"><label>Tanggal selesai *</label><input type="date" v-model="formExport.end_date" class="dv-input" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
             <div class="dv-field">
               <label>Shift</label>
               <select v-model="formExport.shift" class="dv-input">
@@ -608,7 +608,7 @@
         <p class="dv-muted dv-modal-desc">Rekap per Job Order untuk verifikasi Cost Control (jam kerja, downtime termasuk 5S, jam jalan).</p>
         <form @submit.prevent="submitExportCC('xlsx')">
           <div class="dv-form-grid">
-            <div class="dv-field"><label>Tanggal *</label><input type="date" v-model="formCC.tanggal" class="dv-input" required /></div>
+            <div class="dv-field"><label>Tanggal *</label><input type="date" v-model="formCC.tanggal" class="dv-input" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" /></div>
             <div class="dv-field">
               <label>Shift *</label>
               <select v-model="formCC.shift" class="dv-input" required>

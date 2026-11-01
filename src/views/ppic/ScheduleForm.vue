@@ -87,6 +87,8 @@
               v-model="form.start_date"
               class="form-input font-bold"
               required
+              style="cursor: pointer; background: #fff;"
+              @click="$event.target.showPicker && $event.target.showPicker()"
             />
             <small class="hint">Mulai cetak pertama</small>
           </div>

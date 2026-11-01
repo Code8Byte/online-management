@@ -22,7 +22,7 @@
       <div class="grid grid-3 gap-1 mb-1">
         <div class="form-group">
           <label>Tanggal Produksi <span class="text-danger">*</span></label>
-          <input type="date" v-model="form.tanggal" class="form-control" required />
+          <input type="date" v-model="form.tanggal" class="form-control" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
         </div>
         <div class="form-group">
           <label>Shift Kerja <span class="text-danger">*</span></label>
@@ -92,19 +92,19 @@
       <div class="grid grid-4 gap-08 mb-1">
         <div class="form-group">
           <label>Suhu Foil (°C)</label>
-          <input type="number" v-model.number="form.parameter.suhu_foil" class="form-control" placeholder="110 - 130" />
+          <input type="number" v-model.number="form.parameter.suhu_foil" class="form-control" min="0" placeholder="110 - 130" />
         </div>
         <div class="form-group">
           <label>Tekanan Foil / Roll (bar)</label>
-          <input type="number" step="0.1" v-model.number="form.parameter.tekanan_bar" class="form-control" placeholder="Contoh: 3.5" />
+          <input type="number" step="0.1" min="0" v-model.number="form.parameter.tekanan_bar" class="form-control" placeholder="Contoh: 3.5" />
         </div>
         <div class="form-group">
           <label>Roll Foil Terpakai (meter)</label>
-          <input type="number" v-model.number="form.parameter.foil_meter" class="form-control" placeholder="Meter" />
+          <input type="number" v-model.number="form.parameter.foil_meter" class="form-control" min="0" placeholder="Meter" />
         </div>
         <div class="form-group">
           <label>Viskositas UV / Lem</label>
-          <input type="text" v-model="form.parameter.viskositas" class="form-control" placeholder="Contoh: 22 sec DIN4" />
+          <input type="number" step="0.5" min="0" v-model.number="form.parameter.viskositas" class="form-control" placeholder="Contoh: 22" />
         </div>
       </div>
 

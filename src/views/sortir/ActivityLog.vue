@@ -44,11 +44,11 @@
       <div class="grid grid-4 gap-1 mb-1">
         <div class="form-group" style="margin-bottom: 0;">
           <label>Tanggal Mulai</label>
-          <input type="date" v-model="filter.start_date" class="form-control" />
+          <input type="date" v-model="filter.start_date" class="form-control" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
         </div>
         <div class="form-group" style="margin-bottom: 0;">
           <label>Tanggal Selesai</label>
-          <input type="date" v-model="filter.end_date" class="form-control" />
+          <input type="date" v-model="filter.end_date" class="form-control" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
         </div>
         <div class="form-group" style="margin-bottom: 0;">
           <label>Filter Pengguna</label>

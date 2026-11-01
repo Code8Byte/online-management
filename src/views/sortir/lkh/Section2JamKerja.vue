@@ -24,11 +24,11 @@
       <div class="grid grid-2 gap-1">
         <div class="form-group" style="margin-bottom: 0;">
           <label>Start Kerja Shift <span class="text-danger">*</span></label>
-          <input type="datetime-local" v-model="form.start" class="form-control" required @change="$emit('shift-time-change')" />
+          <input type="datetime-local" v-model="form.start" class="form-control font-bold" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" @change="$emit('shift-time-change')" />
         </div>
         <div class="form-group" style="margin-bottom: 0;">
           <label>Finish Kerja Shift <span class="text-danger">*</span></label>
-          <input type="datetime-local" v-model="form.finish" class="form-control" required @change="$emit('shift-time-change')" />
+          <input type="datetime-local" v-model="form.finish" class="form-control font-bold" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" @change="$emit('shift-time-change')" />
         </div>
       </div>
 

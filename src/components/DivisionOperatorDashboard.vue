@@ -160,7 +160,7 @@
           <div class="op-form-grid">
             <div class="op-field">
               <label>Tanggal *</label>
-              <input type="date" v-model="formCC.tanggal" class="op-input" required />
+              <input type="date" v-model="formCC.tanggal" class="op-input" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
             </div>
             <div class="op-field">
               <label>Shift *</label>
@@ -195,7 +195,7 @@
           <div class="op-form-grid">
             <div class="op-field">
               <label>Tanggal *</label>
-              <input type="date" v-model="formLkh.tanggal" class="op-input" required />
+              <input type="date" v-model="formLkh.tanggal" class="op-input" required style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" />
             </div>
             <div class="op-field">
               <label>Shift *</label>

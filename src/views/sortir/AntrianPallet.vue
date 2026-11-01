@@ -21,7 +21,7 @@
           <div v-for="(p, i) in form.pallets" :key="i" class="grid grid-3 gap-1 align-center mb-1">
             <div class="form-group mb-0">
               <label>Nomor Pallet</label>
-              <input type="text" v-model="p.nomor" class="form-control" required />
+              <input type="number" v-model.number="p.nomor" class="form-control" required min="1" placeholder="Contoh: 1" />
             </div>
             <div class="form-group mb-0">
               <label>Jumlah Pcs</label>

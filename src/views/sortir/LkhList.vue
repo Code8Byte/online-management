@@ -32,7 +32,7 @@
           <div class="lv-grid">
             <div class="lv-field">
               <label>Tanggal</label>
-              <input type="date" v-model="filter.tanggal" class="lv-input" @change="applyFilter" />
+              <input type="date" v-model="filter.tanggal" class="lv-input" style="cursor: pointer; background: #fff;" @click="$event.target.showPicker && $event.target.showPicker()" @change="applyFilter" />
             </div>
             <div class="lv-field">
               <label>Tahap sortir</label>
