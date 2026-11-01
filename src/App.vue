@@ -234,10 +234,43 @@ const logout = async () => {
 </script>
 
 <style>
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.app-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1 0 auto;
+}
+
+.app-layout > main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .plain-main {
   width: 100%;
   margin: 0;
   padding: 0;
+  flex: 1 0 auto;
 }
 .brand-logo-img {
   height: 38px;
@@ -257,6 +290,8 @@ const logout = async () => {
 }
 .app-footer {
   margin-top: auto;
+  width: 100%;
+  flex-shrink: 0;
   padding: 16px 20px;
   background: #ffffff;
   border-top: 1px solid var(--c-line, #e2e8f0);
