@@ -122,7 +122,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showSuccess } from '../modal/modalService'
+import { apiFetch } from '../../utils/api'
+import { showAlert, showSuccess } from '../modal/modalService'
 
 const router = useRouter()
 const submitting = ref(false)
@@ -133,8 +134,8 @@ const form = ref({
   mesin: 'SM 23 (Heidelberg)',
   operator: 'Tito',
   helper: 'Slamet',
-  no_pp: 'PP-2026-0840',
-  produk_nama: 'Box Rokok Filter 16',
+  no_pp: 'PP-2026-0821',
+  produk_nama: 'Etiket Rokok Djarum 12 Super',
   target_plano: 50000,
   realisasi_druk: 49500,
   hasil_baik: 48500,
@@ -146,16 +147,57 @@ const form = ref({
   }
 })
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   submitting.value = true
-  setTimeout(() => {
-    submitting.value = false
+  try {
+    const payload = {
+      divisi: 'cetak',
+      tanggal: form.value.tanggal,
+      shift: form.value.shift,
+      mesin_id: 1,
+      operator: form.value.operator + (form.value.helper ? ` & ${form.value.helper}` : ''),
+      start: `${form.value.tanggal} 08:00:00`,
+      finish: `${form.value.tanggal} 16:00:00`,
+      setting_menit: 30,
+      '5s_menit': 15,
+      lembur_menit: 0,
+      keterangan_lembur: '',
+      problem: Object.entries(form.value.cacat).filter(([_, v]) => v > 0).map(([k, v]) => `${k}: ${v}`).join(', '),
+      pp_items: [{
+        no_pp: form.value.no_pp,
+        produk_nama: form.value.produk_nama,
+        tahap_sortir: 'CTK',
+        good: form.value.hasil_baik,
+        reject: form.value.realisasi_druk - form.value.hasil_baik,
+        setup_reject: 100,
+        total_layar: form.value.realisasi_druk,
+        total_proses: form.value.realisasi_druk,
+        plan_shift: form.value.target_plano,
+        waktu_prod_jam: 8,
+        setting_menit: 30,
+        '5s_menit': 15,
+        total_dt_menit: 45,
+        jam_jalan: 7.25,
+        downtime: [],
+        cacat: []
+      }]
+    }
+
+    await apiFetch('lkh.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
     showSuccess(
-      `LKH Divisi Cetak untuk Job Order ${form.value.no_pp} berhasil disimpan!\nHasil Baik: ${form.value.hasil_baik.toLocaleString('id-ID')} plano siap diteruskan ke Completing.`,
+      `LKH Divisi Cetak untuk Job Order ${form.value.no_pp} berhasil disimpan ke database!\nHasil Baik: ${form.value.hasil_baik.toLocaleString('id-ID')} plano siap diteruskan ke Completing.`,
       { title: 'LKH Cetak Tersimpan' }
     )
     router.push('/cetak/lkh')
-  }, 400)
+  } catch (e) {
+    showAlert('Gagal menyimpan LKH Cetak: ' + (e.message || e))
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

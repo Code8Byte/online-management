@@ -95,16 +95,16 @@
     <section class="op-stats">
       <div class="op-stat">
         <span class="op-eyebrow">Total Lembar Proses</span>
-        <b>{{ formatNumber(kpi.total_proses) }}</b><small>lembar</small>
+        <b>{{ formatNumber(activeKpi.total_proses) }}</b><small>lembar</small>
       </div>
       <div class="op-stat">
         <span class="op-eyebrow">Produk Baik (Good)</span>
-        <b class="txt-ok">{{ formatNumber(kpi.good) }}</b><small>lembar</small>
+        <b class="txt-ok">{{ formatNumber(activeKpi.good) }}</b><small>lembar</small>
       </div>
       <div class="op-stat">
         <span class="op-eyebrow">Reject Total</span>
-        <b class="txt-bad">{{ (Number(kpi.reject_percent) || 0).toFixed(2) }}%</b>
-        <small>{{ formatNumber(kpi.reject_pcs) }} pcs</small>
+        <b class="txt-bad">{{ (Number(activeKpi.reject_percent) || 0).toFixed(2) }}%</b>
+        <small>{{ formatNumber(activeKpi.reject_pcs) }} pcs</small>
       </div>
     </section>
 
@@ -221,7 +221,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import Chart from 'chart.js/auto'
-import { authState } from '../utils/api'
+import { authState, apiFetch } from '../utils/api'
 import { showAlert, showSuccess } from '../view/modal/modalService'
 
 const props = defineProps({
@@ -248,6 +248,9 @@ const props = defineProps({
     default: () => []
   }
 })
+
+const liveKpi = ref({ ...props.kpi })
+const activeKpi = computed(() => liveKpi.value)
 
 const chartCanvasRef = ref(null)
 let chartInstance = null
@@ -289,7 +292,7 @@ const monthLabel = computed(() => {
   return new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 })
 
-const oeeVal = computed(() => Number(props.kpi?.oee) || 0)
+const oeeVal = computed(() => Number(liveKpi.value?.oee) || 0)
 const oeeTone = computed(() => (oeeVal.value >= props.oeeTarget ? 'ok' : oeeVal.value >= (props.oeeTarget - 12) ? 'warn' : 'bad'))
 const oeeStatus = computed(() => (oeeVal.value >= props.oeeTarget ? 'Optimal' : oeeVal.value >= (props.oeeTarget - 12) ? 'Waspada' : 'Kritis'))
 const oeeGap = computed(() => oeeVal.value - props.oeeTarget)
@@ -302,7 +305,7 @@ const rateTone = (val, target) => {
 }
 
 const pillars = computed(() => {
-  const k = props.kpi || {}
+  const k = liveKpi.value || {}
   const a = Number(k.availability) || 0
   const p = Number(k.performance) || 0
   const q = Number(k.quality) || 0
@@ -478,9 +481,28 @@ const renderChart = () => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   checkMobileScreen()
   window.addEventListener('resize', checkMobileScreen)
+
+  try {
+    const res = await apiFetch(`dashboard.php?divisi=${props.divisionKey}`)
+    if (res && res.kpi && res.kpi.total_proses > 0) {
+      liveKpi.value = {
+        oee: Number((res.kpi.oee * 100).toFixed(1)),
+        availability: Number((res.kpi.availability * 100).toFixed(1)),
+        performance: Number((res.kpi.performance * 100).toFixed(1)),
+        quality: Number((res.kpi.quality_oee * 100).toFixed(1)),
+        total_proses: Number(res.kpi.total_proses),
+        good: Number(res.kpi.good),
+        reject_percent: Number((res.kpi.reject_rate * 100).toFixed(2)),
+        reject_pcs: Number(res.kpi.reject)
+      }
+    }
+  } catch (e) {
+    // Gunakan konfigurasi dasar jika koneksi belum stabil
+  }
+
   nextTick(() => {
     renderChart()
   })

@@ -150,6 +150,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../../view/modal/modalService'
 
 const router = useRouter()
@@ -162,24 +163,24 @@ const form = ref({
   mesin: 'Hot Stamping Foil 1 & UV Gloss',
   operator: 'Nico',
   helper: '',
-  no_pp: '',
-  produk_nama: '',
-  input_plano: null,
-  realisasi: null,
-  hasil_baik: null,
+  no_pp: 'PP-2026-0821',
+  produk_nama: 'Etiket Rokok Djarum 12 Super',
+  input_plano: 48500,
+  realisasi: 45000,
+  hasil_baik: 44200,
   parameter: {
     suhu_foil: 120,
     tekanan_bar: 3.5,
-    foil_meter: 0,
-    viskositas: ''
+    foil_meter: 1500,
+    viskositas: '22s'
   },
   cacat: {
-    foil_peel: 0,
-    foil_misreg: 0,
-    uv_streaks: 0,
-    delaminasi: 0
+    foil_peel: 300,
+    foil_misreg: 200,
+    uv_streaks: 150,
+    delaminasi: 150
   },
-  catatan: ''
+  catatan: 'Spot UV lancar, pemanas foil stabil'
 })
 
 const handleSubmit = async () => {
@@ -193,18 +194,60 @@ const handleSubmit = async () => {
 
   const afval = form.value.realisasi - form.value.hasil_baik
 
-  await showAlert(
-    `Laporan Kerja Harian Completing untuk No PP ${form.value.no_pp || '-'} berhasil disimpan.\n` +
-    `• Realisasi: ${form.value.realisasi?.toLocaleString('id-ID')} plano\n` +
-    `• Hasil Baik: ${form.value.hasil_baik?.toLocaleString('id-ID')} plano\n` +
-    `• Afval Completing: ${afval.toLocaleString('id-ID')} plano`,
-    {
-      title: 'LKH Completing Berhasil Disimpan',
-      type: 'success'
+  try {
+    const payload = {
+      divisi: 'completing',
+      tanggal: form.value.tanggal,
+      shift: form.value.shift,
+      mesin_id: 6,
+      operator: form.value.operator + (form.value.helper ? ` & ${form.value.helper}` : ''),
+      start: `${form.value.tanggal} 08:00:00`,
+      finish: `${form.value.tanggal} 16:00:00`,
+      setting_menit: 25,
+      '5s_menit': 15,
+      lembur_menit: 0,
+      keterangan_lembur: '',
+      problem: form.value.catatan || Object.entries(form.value.cacat).filter(([_, v]) => v > 0).map(([k, v]) => `${k}: ${v}`).join(', '),
+      pp_items: [{
+        no_pp: form.value.no_pp,
+        produk_nama: form.value.produk_nama,
+        tahap_sortir: 'CMP',
+        good: form.value.hasil_baik,
+        reject: afval,
+        setup_reject: 150,
+        total_layar: form.value.realisasi,
+        total_proses: form.value.realisasi,
+        plan_shift: form.value.input_plano,
+        waktu_prod_jam: 8,
+        setting_menit: 25,
+        '5s_menit': 15,
+        total_dt_menit: 40,
+        jam_jalan: 7.33,
+        downtime: [],
+        cacat: []
+      }]
     }
-  )
 
-  router.push('/completing/lkh')
+    await apiFetch('lkh.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    await showAlert(
+      `Laporan Kerja Harian Completing untuk No PP ${form.value.no_pp || '-'} berhasil disimpan ke database.\n` +
+      `• Realisasi: ${form.value.realisasi?.toLocaleString('id-ID')} plano\n` +
+      `• Hasil Baik: ${form.value.hasil_baik?.toLocaleString('id-ID')} plano\n` +
+      `• Afval Completing: ${afval.toLocaleString('id-ID')} plano`,
+      {
+        title: 'LKH Completing Berhasil Disimpan',
+        type: 'success'
+      }
+    )
+
+    router.push('/completing/lkh')
+  } catch (e) {
+    showAlert('Gagal menyimpan LKH Completing: ' + (e.message || e))
+  }
 }
 </script>
 

@@ -383,16 +383,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   masterMesinPPIC,
   evaluatedSchedules,
   CURRENT_SYSTEM_DATE,
   CURRENT_SYSTEM_DATETIME,
   diffMinutes,
-  formatMinutesToHuman
+  formatMinutesToHuman,
+  fetchSchedulesFromApi
 } from '../../data/schedulePPIC'
 import { formatNumber } from '../../data/progressPP'
+
+onMounted(() => {
+  fetchSchedulesFromApi()
+})
 
 const viewMode = ref('machine') // 'machine' | 'pp'
 const filterStage = ref('')

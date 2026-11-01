@@ -109,61 +109,49 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatNumber } from '../../data/progressPP'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../modal/modalService'
 
 const filterShift = ref('')
 const filterMesin = ref('')
 const searchQuery = ref('')
 
-const lkhCompletingList = ref([
-  {
-    id: 1,
-    tanggal: '2026-10-31',
-    shift: '1',
-    mesin: 'Hot Stamping Foil 1 & UV Gloss',
-    operator: 'Nico & Wahyudi',
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
-    input_plano: 48500,
-    realisasi: 45000,
-    hasil_baik: 44200,
-    afval_plano: 800,
-    cacat_dominan: 'Foil Rontok & Pinhole UV',
-    status: 'running'
-  },
-  {
-    id: 2,
-    tanggal: '2026-10-31',
-    shift: '2',
-    mesin: 'Varnish UV Gloss Obat',
-    operator: 'Sodok & Yanto',
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    input_plano: 39500,
-    realisasi: 39200,
-    hasil_baik: 38800,
-    afval_plano: 400,
-    cacat_dominan: 'Coating Varnish Tebal',
-    status: 'selesai'
-  },
-  {
-    id: 3,
-    tanggal: '2026-10-29',
-    shift: '1',
-    mesin: 'Laminasi Doff & Spot UV',
-    operator: 'Nico & Wahyudi',
-    no_pp: 'PP-2026-0815',
-    produk_nama: 'Brosur Promosi Ekspor Quality',
-    input_plano: 24700,
-    realisasi: 24600,
-    hasil_baik: 24300,
-    afval_plano: 300,
-    cacat_dominan: 'Gelembung Doff Halus',
-    status: 'selesai'
+const lkhCompletingList = ref([])
+const loading = ref(false)
+
+const loadLkh = async () => {
+  loading.value = true
+  try {
+    const res = await apiFetch('lkh.php?action=list&divisi=completing')
+    if (res && res.data && res.data.length > 0) {
+      lkhCompletingList.value = res.data.map(item => ({
+        id: item.id,
+        tanggal: item.tanggal,
+        shift: String(item.shift),
+        mesin: item.mesin_nama || 'Hot Stamping Foil 1 & UV Gloss',
+        operator: item.operator || 'Nico & Wahyudi',
+        no_pp: item.no_pp || 'PP-2026-0821',
+        produk_nama: item.produk_nama || 'Etiket Rokok Djarum 12 Super',
+        input_plano: Number(item.plan_shift || 48500),
+        realisasi: Number(item.total_proses || item.good || 0),
+        hasil_baik: Number(item.good || 0),
+        afval_plano: Number(item.reject || 0),
+        cacat_dominan: item.problem || 'Foil Rontok & Pinhole UV',
+        status: 'running'
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load LKH Completing from API:', e)
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  loadLkh()
+})
 
 const filteredList = computed(() => {
   return lkhCompletingList.value.filter(item => {

@@ -423,14 +423,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   schedulesState,
   evaluatedSchedules,
   updatePpicJobOrder,
-  formatMinutesToHuman
+  formatMinutesToHuman,
+  fetchSchedulesFromApi
 } from '../../data/schedulePPIC'
 import { showAlert } from '../../view/modal/modalService'
+
+onMounted(() => {
+  fetchSchedulesFromApi()
+})
 
 const filterStatus = ref('')
 const searchQuery = ref('')

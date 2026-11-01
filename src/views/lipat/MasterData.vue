@@ -99,13 +99,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 
 const masterMesinLipat = ref([
-  { id: 'gluer-01', nama: 'Herui Gluer 1 (High Speed)', tipe: 'Straight Line & Auto Bottom', speed_jph: 18000 },
-  { id: 'gluer-02', nama: 'Herui Gluer 2', tipe: 'Straight Line Box', speed_jph: 15000 },
-  { id: 'gluer-03', nama: 'Crash Lock Bottom Gluer', tipe: 'Lock Bottom Carton', speed_jph: 12000 },
-  { id: 'gluer-04', nama: 'Folder Gluer Standard', tipe: 'Side Seam & Small Flap', speed_jph: 10000 }
+  { id: 'gluer_herui', nama: 'Herui Speed Gluer', tipe: 'Straight Line & Auto Bottom', speed_jph: 35000 },
+  { id: 'gluer_ml1', nama: 'Mesin Lipat 1 Crash Lock', tipe: 'Crash Lock Carton', speed_jph: 30000 },
+  { id: 'gluer_ml2', nama: 'Mesin Lipat 2 Straight Line', tipe: 'Straight Line Box', speed_jph: 35000 },
+  { id: 'gluer_ml3', nama: 'Mesin Lipat 3 Multi-Point', tipe: 'Multi-Point Gluer', speed_jph: 25000 }
 ])
 
 const cacatLipatList = ref([
@@ -121,4 +122,24 @@ const operatorLipatList = ref([
   { user: 'Sugeng', nama: 'Sugeng Riyadi', role: 'Staff Lipat' },
   { user: 'Bambang', nama: 'Bambang Hariyadi', role: 'Operator Folder Gluer' }
 ])
+
+const loadMaster = async () => {
+  try {
+    const res = await apiFetch('master.php?action=mesin&divisi=lipat')
+    if (res && res.length > 0) {
+      masterMesinLipat.value = res.map(m => ({
+        id: String(m.id),
+        nama: m.nama,
+        tipe: 'Folder Gluer Finishing',
+        speed_jph: Number(m.speed_jph || 30000)
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load Master Lipat from API:', e)
+  }
+}
+
+onMounted(() => {
+  loadMaster()
+})
 </script>

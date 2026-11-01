@@ -109,63 +109,49 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../../view/modal/modalService'
 
 const filterShift = ref('')
 const filterMesin = ref('')
 const searchQuery = ref('')
 
-const lkhLipatData = ref([
-  {
-    id: 1,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'Herui Gluer 1 (High Speed)',
-    operator: 'Jevon',
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    tipe_box: 'Straight Line Box',
-    target_pcs: 96000,
-    realisasi_pcs: 95500,
-    hasil_baik_pcs: 95100,
-    reject_pcs: 400,
-    status: 'selesai',
-    cacat: { fishtailing: 180, lem_meleber: 120, unglued: 70, baret: 30 }
-  },
-  {
-    id: 2,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'Crash Lock Bottom Gluer',
-    operator: 'Sugeng',
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    tipe_box: 'Crash Lock Auto Bottom',
-    target_pcs: 99900,
-    realisasi_pcs: 98000,
-    hasil_baik_pcs: 97650,
-    reject_pcs: 350,
-    status: 'selesai',
-    cacat: { fishtailing: 150, lem_meleber: 90, unglued: 80, baret: 30 }
-  },
-  {
-    id: 3,
-    tanggal: '2026-10-31',
-    shift: '2',
-    mesin: 'Herui Gluer 2',
-    operator: 'Jevon',
-    no_pp: 'PP-2026-0842',
-    produk_nama: 'Kotak Makanan Ringan Ekspor',
-    tipe_box: 'Side Seam Gluer',
-    target_pcs: 59400,
-    realisasi_pcs: 59200,
-    hasil_baik_pcs: 58950,
-    reject_pcs: 250,
-    status: 'selesai',
-    cacat: { fishtailing: 110, lem_meleber: 70, unglued: 50, baret: 20 }
+const lkhLipatData = ref([])
+const loading = ref(false)
+
+const loadLkh = async () => {
+  loading.value = true
+  try {
+    const res = await apiFetch('lkh.php?action=list&divisi=lipat')
+    if (res && res.data && res.data.length > 0) {
+      lkhLipatData.value = res.data.map(item => ({
+        id: item.id,
+        tanggal: item.tanggal,
+        shift: String(item.shift),
+        mesin: item.mesin_nama || 'Herui Speed Gluer',
+        operator: item.operator || 'Jevon',
+        no_pp: item.no_pp || 'PP-2026-0821',
+        produk_nama: item.produk_nama || 'Etiket Rokok Djarum 12 Super',
+        tipe_box: 'Straight Line Box',
+        target_pcs: Number(item.plan_shift || 100000),
+        realisasi_pcs: Number(item.total_proses || item.good || 0),
+        hasil_baik_pcs: Number(item.good || 0),
+        reject_pcs: Number(item.reject || 0),
+        status: 'selesai',
+        cacat: { fishtailing: Math.round(Number(item.reject || 0) * 0.4), lem_meleber: Math.round(Number(item.reject || 0) * 0.3), unglued: Math.round(Number(item.reject || 0) * 0.2), baret: Math.round(Number(item.reject || 0) * 0.1) }
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load LKH Lipat from API:', e)
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  loadLkh()
+})
 
 const filteredList = computed(() => {
   return lkhLipatData.value.filter(item => {

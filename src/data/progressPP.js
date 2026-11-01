@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { apiFetch } from '../utils/api'
 
 export const initialJobOrders = [
   {
@@ -556,6 +557,23 @@ export const initialJobOrders = [
 ]
 
 export const jobOrdersState = ref([...initialJobOrders])
+
+export async function fetchProgressFromApi() {
+  try {
+    const res = await apiFetch('ppic.php?action=progress')
+    if (Array.isArray(res) && res.length > 0) {
+      jobOrdersState.value = res
+    }
+  } catch (e) {
+    console.error('Failed to fetch progress from API:', e)
+  }
+}
+
+// Auto-fetch jika berjalan di browser
+if (typeof window !== 'undefined') {
+  setTimeout(() => { fetchProgressFromApi() }, 150)
+}
+
 
 export function getJobOrders() {
   return jobOrdersState.value

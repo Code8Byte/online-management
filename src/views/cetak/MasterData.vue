@@ -97,7 +97,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 
 const masterMesinCetak = ref([
   { id: 'sm23', nama: 'SM 23 (Heidelberg Speedmaster 102)', speed_jph: 8500 },
@@ -116,14 +117,33 @@ const cacatCetakList = ref([
 ])
 
 const operatorCetakList = ref([
-  { user: 'Tito', nama: 'Tito Pratama', role: 'Staff Cetak (Captain SM 23)' },
-  { user: 'Yoel', nama: 'Yoel Wijaya', role: 'Staff Cetak (Captain SM 25)' },
-  { user: 'Calvin', nama: 'Calvin Santoso', role: 'Staff Cetak (Captain KBA Rapida)' },
-  { user: 'Slamet', nama: 'Slamet Riyadi', role: 'Operator Cetak Senior' },
-  { user: 'Agus', nama: 'Agus Susanto', role: 'Operator Cetak' },
-  { user: 'Doni', nama: 'Doni Prasetyo', role: 'Operator Cetak' },
-  { user: 'Hendra', nama: 'Hendra Gunawan', role: 'Operator Cetak SM 10' }
+  { user: 'Tito', nama: 'Tito Pratama', role: 'Staff Cetak (SM 23)' },
+  { user: 'Yoel', nama: 'Yoel Wijaya', role: 'Staff Cetak (SM 25)' },
+  { user: 'Calvin', nama: 'Calvin Santoso', role: 'Staff Cetak (KBA Rapida)' },
+  { user: 'Slamet', nama: 'Slamet Riyadi', role: 'Operator Cetak Senior' }
 ])
+
+const loadMaster = async () => {
+  try {
+    const [mesinRes, cacatRes] = await Promise.all([
+      apiFetch('master.php?action=mesin&divisi=cetak'),
+      apiFetch('master.php?action=cacat')
+    ])
+    if (mesinRes && mesinRes.length > 0) {
+      masterMesinCetak.value = mesinRes.map(m => ({
+        id: String(m.id),
+        nama: m.nama,
+        speed_jph: Number(m.speed_jph || 8500)
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load Master Cetak from API:', e)
+  }
+}
+
+onMounted(() => {
+  loadMaster()
+})
 </script>
 
 <style scoped>

@@ -99,14 +99,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 
 const masterMesinCabut = ref([
-  { id: 'ms-01', nama: 'Bobst Die Cutter MS 1', tipe: 'Automatic High Speed', speed_jph: 5500 },
-  { id: 'ms-02', nama: 'Bobst Die Cutter MS 2', tipe: 'Automatic Die Cutter', speed_jph: 5000 },
-  { id: 'ms-03', nama: 'Bobst Die Cutter MS 3', tipe: 'Die Cutter & Stripping', speed_jph: 4800 },
-  { id: 'ms-04', nama: 'Bobst Die Cutter MS 4', tipe: 'Automatic Die Cutter', speed_jph: 4500 },
-  { id: 'pnd-01', nama: 'Mesin Pond Manual', tipe: 'Clamshell Manual Pond', speed_jph: 1200 }
+  { id: 'ms1', nama: 'Bobst MS 1 (Die Plat 4 Up)', tipe: 'Automatic Die Plat 4 Up', speed_jph: 6000 },
+  { id: 'ms2', nama: 'Bobst MS 2 Presisi', tipe: 'Automatic Presisi', speed_jph: 6500 },
+  { id: 'ms3', nama: 'Bobst MS 3 Double Crease', tipe: 'Double Crease Platen', speed_jph: 5500 },
+  { id: 'ms4', nama: 'Bobst MS 4 High Speed', tipe: 'High Speed Pond', speed_jph: 5500 }
 ])
 
 const cacatCabutList = ref([
@@ -122,4 +122,24 @@ const operatorCabutList = ref([
   { user: 'Kardi', nama: 'Kardi Sukoco', role: 'Staff Cabut' },
   { user: 'Supriyadi', nama: 'Supriyadi', role: 'Operator Lead Bobst' }
 ])
+
+const loadMaster = async () => {
+  try {
+    const res = await apiFetch('master.php?action=mesin&divisi=cabut')
+    if (res && res.length > 0) {
+      masterMesinCabut.value = res.map(m => ({
+        id: String(m.id),
+        nama: m.nama,
+        tipe: 'Pond & Die-Cutting',
+        speed_jph: Number(m.speed_jph || 6000)
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load Master Cabut from API:', e)
+  }
+}
+
+onMounted(() => {
+  loadMaster()
+})
 </script>

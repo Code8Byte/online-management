@@ -154,6 +154,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../../view/modal/modalService'
 
 const router = useRouter()
@@ -165,21 +166,21 @@ const form = ref({
   mesin: 'Herui Gluer 1 (High Speed)',
   operator: 'Jevon',
   helper: '',
-  no_pp: '',
-  produk_nama: '',
+  no_pp: 'PP-2026-0821',
+  produk_nama: 'Etiket Rokok Djarum 12 Super',
   tipe_box: 'Straight Line Box',
-  target_pcs: null,
-  realisasi_pcs: null,
-  hasil_baik_pcs: null,
+  target_pcs: 100000,
+  realisasi_pcs: 95000,
+  hasil_baik_pcs: 94000,
   tipe_lem: 'Cold Waterbased PVA',
   speed_cpm: 250,
   cacat: {
-    fishtailing: 0,
-    lem_meleber: 0,
-    unglued: 0,
-    baret: 0
+    fishtailing: 400,
+    lem_meleber: 300,
+    unglued: 200,
+    baret: 100
   },
-  catatan: ''
+  catatan: 'Folder gluer lancar, press belt optimal'
 })
 
 const rejectPcs = computed(() => {
@@ -196,20 +197,62 @@ const handleSubmit = async () => {
     return
   }
 
-  const msg =
-    `Laporan Kerja Harian Divisi Lipat berhasil disimpan.\n` +
-    `• No PP: ${form.value.no_pp || '-'}\n` +
-    `• Mesin: ${form.value.mesin} (${form.value.tipe_box})\n` +
-    `• Realisasi: ${form.value.realisasi_pcs?.toLocaleString('id-ID')} pcs\n` +
-    `• Hasil Baik: ${form.value.hasil_baik_pcs?.toLocaleString('id-ID')} pcs\n` +
-    `• Reject Lipat: ${rejectPcs.value.toLocaleString('id-ID')} pcs`
+  try {
+    const payload = {
+      divisi: 'lipat',
+      tanggal: form.value.tanggal,
+      shift: form.value.shift,
+      mesin_id: 19,
+      operator: form.value.operator + (form.value.helper ? ` & ${form.value.helper}` : ''),
+      start: `${form.value.tanggal} 08:00:00`,
+      finish: `${form.value.tanggal} 16:00:00`,
+      setting_menit: 20,
+      '5s_menit': 15,
+      lembur_menit: 0,
+      keterangan_lembur: '',
+      problem: form.value.catatan || Object.entries(form.value.cacat).filter(([_, v]) => v > 0).map(([k, v]) => `${k}: ${v}`).join(', '),
+      pp_items: [{
+        no_pp: form.value.no_pp,
+        produk_nama: form.value.produk_nama,
+        tahap_sortir: 'LPT',
+        good: form.value.hasil_baik_pcs,
+        reject: rejectPcs.value,
+        setup_reject: 100,
+        total_layar: form.value.realisasi_pcs,
+        total_proses: form.value.realisasi_pcs,
+        plan_shift: form.value.target_pcs,
+        waktu_prod_jam: 8,
+        setting_menit: 20,
+        '5s_menit': 15,
+        total_dt_menit: 35,
+        jam_jalan: 7.42,
+        downtime: [],
+        cacat: []
+      }]
+    }
 
-  await showAlert(msg, {
-    title: 'LKH Lipat Berhasil Disimpan',
-    type: 'success'
-  })
+    await apiFetch('lkh.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
 
-  router.push('/lipat/lkh')
+    const msg =
+      `Laporan Kerja Harian Divisi Lipat berhasil disimpan ke database.\n` +
+      `• No PP: ${form.value.no_pp || '-'}\n` +
+      `• Mesin: ${form.value.mesin} (${form.value.tipe_box})\n` +
+      `• Realisasi: ${form.value.realisasi_pcs?.toLocaleString('id-ID')} pcs\n` +
+      `• Hasil Baik: ${form.value.hasil_baik_pcs?.toLocaleString('id-ID')} pcs\n` +
+      `• Reject Lipat: ${rejectPcs.value.toLocaleString('id-ID')} pcs`
+
+    await showAlert(msg, {
+      title: 'LKH Lipat Berhasil Disimpan',
+      type: 'success'
+    })
+
+    router.push('/lipat/lkh')
+  } catch (e) {
+    showAlert('Gagal menyimpan LKH Lipat: ' + (e.message || e))
+  }
 }
 </script>
 

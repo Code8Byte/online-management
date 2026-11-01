@@ -532,8 +532,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { jobOrdersState, formatNumber, getStatusTone, getStatusLabel } from '../data/progressPP'
+import { ref, computed, onMounted } from 'vue'
+import { jobOrdersState, formatNumber, getStatusTone, getStatusLabel, fetchProgressFromApi } from '../data/progressPP'
 
 // Memanggil progress PP di masing-masing folder divisi
 import CetakProgressPP from './cetak/ProgressPP.vue'
@@ -545,6 +545,10 @@ import LipatProgressPP from './lipat/ProgressPP.vue'
 const searchQuery = ref('')
 const statusFilter = ref('') // '' | 'aktif' | 'req' | 'selesai'
 const activeDivisionTab = ref('all') // 'all' | 'cetak' | 'completing' | 'cabut' | 'sortir' | 'lipat'
+
+onMounted(() => {
+  fetchProgressFromApi()
+})
 
 const allOrders = computed(() => jobOrdersState.value)
 

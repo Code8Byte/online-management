@@ -526,6 +526,7 @@ const loadData = async () => {
   const query = new URLSearchParams()
   query.append('page', page.value)
   query.append('limit', limit)
+  query.append('divisi', 'sortir')
   if (filter.value.tanggal) query.append('tanggal', filter.value.tanggal)
   if (filter.value.shift) query.append('shift', filter.value.shift)
   if (filter.value.tahap_sortir) query.append('tahap_sortir', filter.value.tahap_sortir)

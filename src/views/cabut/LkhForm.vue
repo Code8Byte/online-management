@@ -158,6 +158,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../../view/modal/modalService'
 
 const router = useRouter()
@@ -169,18 +170,18 @@ const form = ref({
   mesin: 'Bobst Die Cutter MS 1',
   operator: 'Haryanto',
   helper: '',
-  no_pp: '',
-  produk_nama: '',
+  no_pp: 'PP-2026-0821',
+  produk_nama: 'Etiket Rokok Djarum 12 Super',
   up_per_plano: 4,
-  realisasi_potong_plano: null,
-  hasil_baik_plano: null,
+  realisasi_potong_plano: 40000,
+  hasil_baik_plano: 39250,
   cacat: {
-    pisau_tumpul: 0,
-    creasing_pecah: 0,
-    nicks_gompal: 0,
-    stripping_rusak: 0
+    pisau_tumpul: 300,
+    creasing_pecah: 200,
+    nicks_gompal: 150,
+    stripping_rusak: 100
   },
-  catatan: ''
+  catatan: 'Pisau pond tajam, stripping mulus'
 })
 
 const rejectPlano = computed(() => {
@@ -207,19 +208,62 @@ const handleSubmit = async () => {
     return
   }
 
-  const msg =
-    `LKH Cabut untuk No PP ${form.value.no_pp || '-'} berhasil disimpan.\n` +
-    `• Potong Plano: ${form.value.realisasi_potong_plano?.toLocaleString('id-ID')} plano\n` +
-    `• Up per Plano: ${form.value.up_per_plano} pcs/plano\n` +
-    `• Hasil Baik Terkonversi: ${convertedGoodPcs.value.toLocaleString('id-ID')} PCS\n` +
-    `• Reject Terkonversi: ${convertedRejectPcs.value.toLocaleString('id-ID')} PCS`
+  try {
+    const payload = {
+      divisi: 'cabut',
+      tanggal: form.value.tanggal,
+      shift: form.value.shift,
+      mesin_id: 11,
+      operator: form.value.operator + (form.value.helper ? ` & ${form.value.helper}` : ''),
+      start: `${form.value.tanggal} 08:00:00`,
+      finish: `${form.value.tanggal} 16:00:00`,
+      setting_menit: 30,
+      '5s_menit': 15,
+      lembur_menit: 0,
+      keterangan_lembur: '',
+      problem: form.value.catatan || Object.entries(form.value.cacat).filter(([_, v]) => v > 0).map(([k, v]) => `${k}: ${v}`).join(', '),
+      pp_items: [{
+        no_pp: form.value.no_pp,
+        produk_nama: form.value.produk_nama,
+        tahap_sortir: 'CBT',
+        up_per_plano: form.value.up_per_plano,
+        good: form.value.hasil_baik_plano,
+        reject: rejectPlano.value,
+        setup_reject: 100,
+        total_layar: form.value.realisasi_potong_plano,
+        total_proses: form.value.realisasi_potong_plano,
+        plan_shift: 44200,
+        waktu_prod_jam: 8,
+        setting_menit: 30,
+        '5s_menit': 15,
+        total_dt_menit: 45,
+        jam_jalan: 7.25,
+        downtime: [],
+        cacat: []
+      }]
+    }
 
-  await showAlert(msg, {
-    title: 'LKH Cabut Berhasil Disimpan',
-    type: 'success'
-  })
+    await apiFetch('lkh.php?action=create', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
 
-  router.push('/cabut/lkh')
+    const msg =
+      `LKH Cabut untuk No PP ${form.value.no_pp || '-'} berhasil disimpan ke database.\n` +
+      `• Potong Plano: ${form.value.realisasi_potong_plano?.toLocaleString('id-ID')} plano\n` +
+      `• Up per Plano: ${form.value.up_per_plano} pcs/plano\n` +
+      `• Hasil Baik Terkonversi: ${convertedGoodPcs.value.toLocaleString('id-ID')} PCS\n` +
+      `• Reject Terkonversi: ${convertedRejectPcs.value.toLocaleString('id-ID')} PCS`
+
+    await showAlert(msg, {
+      title: 'LKH Cabut Berhasil Disimpan',
+      type: 'success'
+    })
+
+    router.push('/cabut/lkh')
+  } catch (e) {
+    showAlert('Gagal menyimpan LKH Cabut: ' + (e.message || e))
+  }
 }
 </script>
 

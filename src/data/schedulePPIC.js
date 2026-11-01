@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { apiFetch } from '../utils/api'
 
 // ==========================================
 // 1. MASTER MESIN & KAPASITAS STANDAR PPIC
@@ -422,6 +423,43 @@ const baseSchedules = [
   }
 ]
 
+
+// ==========================================
+// 5.1 SYNC DENGAN DATABASE MYSQL VIA API
+// ==========================================
+export async function fetchSchedulesFromApi() {
+  try {
+    const res = await apiFetch('ppic.php?action=gantt')
+    if (Array.isArray(res) && res.length > 0) {
+      schedulesState.value = res.map(task => ({
+        ...task,
+        id: Number(task.id),
+        stage_num: Number(task.stage_num),
+        plan_qty: Number(task.plan_qty),
+        actual_output: Number(task.actual_output),
+        good: Number(task.good),
+        reject: Number(task.reject),
+        progress: Number(task.progress),
+        duration_minutes: Number(task.duration_minutes),
+        oplaag_pcs: Number(task.oplaag_pcs),
+        up_per_plano: Number(task.up_per_plano),
+        plan_plano: Number(task.plan_plano),
+        muatan_koli: Number(task.muatan_koli),
+        muatan_pallet: Number(task.muatan_pallet),
+        ritase: Number(task.ritase),
+        is_extended: Boolean(Number(task.is_extended))
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to fetch schedules from API:', e)
+  }
+}
+
+// Auto-fetch jika berjalan di browser
+if (typeof window !== 'undefined') {
+  setTimeout(() => { fetchSchedulesFromApi() }, 100)
+}
+
 // ==========================================
 // 5. REACTIVE STATE & AUTO-EXTEND EVALUATION
 // ==========================================
@@ -603,6 +641,12 @@ export function updatePpicJobOrder(updatedPP) {
     }
     return task
   })
+
+  // Persist perubahan ke Database MySQL
+  apiFetch('ppic.php?action=update_pp', {
+    method: 'POST',
+    body: JSON.stringify(updatedPP)
+  }).catch(e => console.error('Failed to update PP in database:', e))
 }
 
 /**

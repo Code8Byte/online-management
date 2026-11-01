@@ -133,75 +133,48 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../../view/modal/modalService'
 
 const filterShift = ref('')
 const filterMesin = ref('')
 const searchQuery = ref('')
 
-const lkhCabutData = ref([
-  {
-    id: 1,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'Bobst Die Cutter MS 1',
-    operator: 'Haryanto',
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    up_per_plano: 4,
-    realisasi_potong_plano: 24300,
-    hasil_baik_plano: 24000,
-    reject_plano: 300,
-    status: 'selesai',
-    cacat: { pisau_tumpul: 120, creasing_pecah: 80, stripping_rusak: 100 }
-  },
-  {
-    id: 2,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'Bobst Die Cutter MS 2',
-    operator: 'Kardi Sukoco',
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    up_per_plano: 6,
-    realisasi_potong_plano: 16800,
-    hasil_baik_plano: 16650,
-    reject_plano: 150,
-    status: 'selesai',
-    cacat: { pisau_tumpul: 50, creasing_pecah: 60, stripping_rusak: 40 }
-  },
-  {
-    id: 3,
-    tanggal: '2026-10-31',
-    shift: '2',
-    mesin: 'Bobst Die Cutter MS 3',
-    operator: 'Haryanto',
-    no_pp: 'PP-2026-0842',
-    produk_nama: 'Kotak Makanan Ringan Ekspor',
-    up_per_plano: 2,
-    realisasi_potong_plano: 30000,
-    hasil_baik_plano: 29700,
-    reject_plano: 300,
-    status: 'selesai',
-    cacat: { pisau_tumpul: 140, creasing_pecah: 110, stripping_rusak: 50 }
-  },
-  {
-    id: 4,
-    tanggal: '2026-10-31',
-    shift: '3',
-    mesin: 'Bobst Die Cutter MS 1',
-    operator: 'Kardi Sukoco',
-    no_pp: 'PP-2026-0843',
-    produk_nama: 'Karton Teh Premium 25s',
-    up_per_plano: 4,
-    realisasi_potong_plano: 21500,
-    hasil_baik_plano: 21200,
-    reject_plano: 300,
-    status: 'selesai',
-    cacat: { pisau_tumpul: 150, creasing_pecah: 90, stripping_rusak: 60 }
+const lkhCabutData = ref([])
+const loading = ref(false)
+
+const loadLkh = async () => {
+  loading.value = true
+  try {
+    const res = await apiFetch('lkh.php?action=list&divisi=cabut')
+    if (res && res.data && res.data.length > 0) {
+      lkhCabutData.value = res.data.map(item => ({
+        id: item.id,
+        tanggal: item.tanggal,
+        shift: String(item.shift),
+        mesin: item.mesin_nama || 'Bobst Die Cutter MS 1',
+        operator: item.operator || 'Haryanto',
+        no_pp: item.no_pp || 'PP-2026-0821',
+        produk_nama: item.produk_nama || 'Etiket Rokok Djarum 12 Super',
+        up_per_plano: Number(item.up_per_plano || 4),
+        realisasi_potong_plano: Number(item.total_proses || item.good || 24300),
+        hasil_baik_plano: Number(item.good || 24000),
+        reject_plano: Number(item.reject || 300),
+        status: 'selesai',
+        cacat: { pisau_tumpul: Math.round(Number(item.reject || 300) * 0.4), creasing_pecah: Math.round(Number(item.reject || 300) * 0.3), stripping_rusak: Math.round(Number(item.reject || 300) * 0.3) }
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load LKH Cabut from API:', e)
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  loadLkh()
+})
 
 const filteredList = computed(() => {
   return lkhCabutData.value.filter(item => {

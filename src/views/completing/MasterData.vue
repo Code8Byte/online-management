@@ -99,14 +99,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '../../utils/api'
 
 const masterMesinCompleting = ref([
-  { id: 'hsf-01', nama: 'Hot Stamping Foil 1 & UV Gloss', proses: 'Hot Foil & Gloss', speed_jph: 3200 },
-  { id: 'hsf-02', nama: 'Hot Stamping Foil 2', proses: 'Hot Stamping Foil', speed_jph: 2800 },
-  { id: 'uv-01', nama: 'Varnish UV Gloss Obat', proses: 'Varnish UV Full/Coating', speed_jph: 4000 },
-  { id: 'flute-01', nama: 'Laminasi Flute E/F', proses: 'Flute Laminating Box', speed_jph: 2500 },
-  { id: 'doff-01', nama: 'Laminasi Doff & Spot UV', proses: 'Doff Film & Spot UV', speed_jph: 3000 }
+  { id: 'hsf-01', nama: 'Hot Stamping Foil 1 & UV Gloss', proses: 'Hot Foil & Gloss', speed_jph: 4500 },
+  { id: 'hsf-02', nama: 'Hot Stamping Foil 2', proses: 'Hot Stamping Foil', speed_jph: 4000 },
+  { id: 'uv-01', nama: 'Varnish UV Gloss Obat Pharma', proses: 'Varnish UV Full/Coating', speed_jph: 6000 },
+  { id: 'flute-01', nama: 'Laminasi Flute E/F Corrugated', proses: 'Flute Laminating Box', speed_jph: 4000 },
+  { id: 'doff-01', nama: 'Laminasi Transfer Hologram', proses: 'Hologram Transfer', speed_jph: 3500 }
 ])
 
 const cacatCompletingList = ref([
@@ -123,4 +124,24 @@ const operatorCompletingList = ref([
   { user: 'Sodok', nama: 'Sodok Sudarmanto', role: 'Staff Completing' },
   { user: 'Wahyudi', nama: 'Wahyudi Kusuma', role: 'Operator Finishing Lead' }
 ])
+
+const loadMaster = async () => {
+  try {
+    const res = await apiFetch('master.php?action=mesin&divisi=completing')
+    if (res && res.length > 0) {
+      masterMesinCompleting.value = res.map(m => ({
+        id: String(m.id),
+        nama: m.nama,
+        proses: 'Finishing & Completing',
+        speed_jph: Number(m.speed_jph || 4500)
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load Master Completing from API:', e)
+  }
+}
+
+onMounted(() => {
+  loadMaster()
+})
 </script>

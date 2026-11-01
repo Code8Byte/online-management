@@ -109,80 +109,50 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { formatNumber } from '../../data/progressPP'
+import { apiFetch } from '../../utils/api'
 import { showAlert } from '../modal/modalService'
 
 const filterShift = ref('')
 const filterMesin = ref('')
 const searchQuery = ref('')
 
-const lkhCetakList = ref([
-  {
-    id: 1,
-    tanggal: '2026-10-31',
-    shift: '1',
-    mesin: 'SM 23 (Heidelberg)',
-    operator: 'Tito & Slamet',
-    no_pp: 'PP-2026-0821',
-    produk_nama: 'Etiket Rokok Djarum 12 Super',
-    target_plano: 50000,
-    realisasi_druk: 49500,
-    hasil_baik: 48500,
-    afval_plano: 1000,
-    cacat_dominan: 'Scumming & Register Warna',
-    downtime_mnt: 45,
-    status: 'selesai'
-  },
-  {
-    id: 2,
-    tanggal: '2026-10-31',
-    shift: '2',
-    mesin: 'SM 25 (Heidelberg)',
-    operator: 'Yoel & Agus',
-    no_pp: 'PP-2026-0824',
-    produk_nama: 'Box Farmasi Kalbe Farma 500mg',
-    target_plano: 40000,
-    realisasi_druk: 40200,
-    hasil_baik: 39500,
-    afval_plano: 700,
-    cacat_dominan: 'Hickey Bintik Tinta',
-    downtime_mnt: 30,
-    status: 'selesai'
-  },
-  {
-    id: 3,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'KBA Rapida 106',
-    operator: 'Calvin & Doni',
-    no_pp: 'PP-2026-0828',
-    produk_nama: 'Outer Corrugated Box Indofood Flat Sheet',
-    target_plano: 60000,
-    realisasi_druk: 59800,
-    hasil_baik: 58500,
-    afval_plano: 1300,
-    cacat_dominan: 'Set-off & Feeder Macet',
-    downtime_mnt: 60,
-    status: 'selesai'
-  },
-  {
-    id: 4,
-    tanggal: '2026-11-01',
-    shift: '1',
-    mesin: 'SM 10 (Heidelberg)',
-    operator: 'Tito & Hendra',
-    no_pp: 'PP-2026-0831',
-    produk_nama: 'Inner Frame Gudang Garam Merah',
-    target_plano: 35000,
-    realisasi_druk: 28000,
-    hasil_baik: 27400,
-    afval_plano: 600,
-    cacat_dominan: 'Register Warna Solid',
-    downtime_mnt: 40,
-    status: 'running'
+const lkhCetakList = ref([])
+const loading = ref(false)
+
+const loadLkh = async () => {
+  loading.value = true
+  try {
+    const res = await apiFetch('lkh.php?action=list&divisi=cetak')
+    if (res && res.data && res.data.length > 0) {
+      lkhCetakList.value = res.data.map(item => ({
+        id: item.id,
+        tanggal: item.tanggal,
+        shift: String(item.shift),
+        mesin: item.mesin_nama || 'SM 23 (Heidelberg)',
+        operator: item.operator || 'Tito & Slamet',
+        no_pp: item.no_pp || 'PP-2026-0821',
+        produk_nama: item.produk_nama || 'Etiket Rokok Djarum 12 Super',
+        target_plano: Number(item.plan_shift || 50000),
+        realisasi_druk: Number(item.total_proses || item.good || 0),
+        hasil_baik: Number(item.good || 0),
+        afval_plano: Number(item.reject || 0),
+        cacat_dominan: item.problem || 'Scumming & Register Warna',
+        downtime_mnt: Number(item.total_dt_menit || 45),
+        status: 'selesai'
+      }))
+    }
+  } catch (e) {
+    console.error('Failed to load LKH Cetak from API:', e)
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  loadLkh()
+})
 
 const filteredList = computed(() => {
   return lkhCetakList.value.filter(item => {
