@@ -3,6 +3,7 @@ import './assets/style.css'
 import App from './App.vue'
 import router from './router'
 import { initAuth } from './utils/api'
+import './view/modal/modalService'
 
 initAuth().then(() => {
   createApp(App)
