@@ -13,16 +13,44 @@ import LipatDashboard from '../views/lipat/Dashboard.vue'
 import SortirDashboard from '../views/sortir/Dashboard.vue'
 import PpicDashboard from '../views/ppic/Dashboard.vue'
 
-// Operational Views (Lintas Divisi & Master)
-import ProgressPP from '../views/ProgressPP.vue'
+// Cetak Views
+import CetakLkhList from '../views/cetak/LkhList.vue'
+import CetakLkhForm from '../views/cetak/LkhForm.vue'
+import CetakMasterData from '../views/cetak/MasterData.vue'
 import CetakProgressPP from '../views/cetak/ProgressPP.vue'
+
+// Completing Views
+import CompletingLkhList from '../views/completing/LkhList.vue'
+import CompletingLkhForm from '../views/completing/LkhForm.vue'
+import CompletingMasterData from '../views/completing/MasterData.vue'
 import CompletingProgressPP from '../views/completing/ProgressPP.vue'
+
+// Cabut Views
+import CabutLkhList from '../views/cabut/LkhList.vue'
+import CabutLkhForm from '../views/cabut/LkhForm.vue'
+import CabutMasterData from '../views/cabut/MasterData.vue'
 import CabutProgressPP from '../views/cabut/ProgressPP.vue'
+
+// Lipat Views
+import LipatLkhList from '../views/lipat/LkhList.vue'
+import LipatLkhForm from '../views/lipat/LkhForm.vue'
+import LipatMasterData from '../views/lipat/MasterData.vue'
 import LipatProgressPP from '../views/lipat/ProgressPP.vue'
+
+// Sortir Views
+import SortirLkhList from '../views/sortir/LkhList.vue'
+import SortirLkhForm from '../views/sortir/LkhForm.vue'
+import SortirMasterData from '../views/sortir/MasterData.vue'
 import SortirProgressPP from '../views/sortir/ProgressPP.vue'
-import LkhForm from '../views/sortir/LkhForm.vue'
-import LkhList from '../views/sortir/LkhList.vue'
-import MasterData from '../views/sortir/MasterData.vue'
+
+// PPIC Views
+import PpicLkhList from '../views/ppic/LkhList.vue'
+import PpicLkhForm from '../views/ppic/LkhForm.vue'
+import PpicMasterData from '../views/ppic/MasterData.vue'
+import PpicJadwal from '../views/ppic/Jadwal.vue'
+
+// Shared & Operational Views
+import ProgressPP from '../views/ProgressPP.vue'
 import Profile from '../views/sortir/Profile.vue'
 import ActivityLog from '../views/sortir/ActivityLog.vue'
 import AccountManagement from '../views/sortir/AccountManagement.vue'
@@ -46,7 +74,7 @@ const routes = [
   { path: '/loginroadmap', component: LoginRoadmap },
   { path: '/roadmap', component: Roadmap },
 
-  // Division Dashboards & PPIC
+  // Division Dashboards (Diisolasi sesuai divisi masing-masing)
   { path: '/ppic', component: PpicDashboard, meta: { requiresAuth: true } },
   { path: '/cetak', component: CetakDashboard, meta: { requiresAuth: true } },
   { path: '/completing', component: CompletingDashboard, meta: { requiresAuth: true } },
@@ -54,25 +82,61 @@ const routes = [
   { path: '/lipat', component: LipatDashboard, meta: { requiresAuth: true } },
   { path: '/sortir', component: SortirDashboard, meta: { requiresAuth: true } },
 
-  // Root redirect placeholder
-  { path: '/', component: SortirDashboard, meta: { requiresAuth: true } },
+  // Cetak Division Routes
+  { path: '/cetak/lkh', component: CetakLkhList, meta: { requiresAuth: true } },
+  { path: '/cetak/lkh/baru', component: CetakLkhForm, meta: { requiresAuth: true } },
+  { path: '/cetak/master', component: CetakMasterData, meta: { requiresAuth: true } },
+  { path: '/cetak/progress', component: CetakProgressPP, meta: { requiresAuth: true } },
 
-  // Operational & Management Routes (Tidak ada pembatasan view, semua dapat diakses)
+  // Completing Division Routes
+  { path: '/completing/lkh', component: CompletingLkhList, meta: { requiresAuth: true } },
+  { path: '/completing/lkh/baru', component: CompletingLkhForm, meta: { requiresAuth: true } },
+  { path: '/completing/master', component: CompletingMasterData, meta: { requiresAuth: true } },
+  { path: '/completing/progress', component: CompletingProgressPP, meta: { requiresAuth: true } },
+
+  // Cabut Division Routes
+  { path: '/cabut/lkh', component: CabutLkhList, meta: { requiresAuth: true } },
+  { path: '/cabut/lkh/baru', component: CabutLkhForm, meta: { requiresAuth: true } },
+  { path: '/cabut/master', component: CabutMasterData, meta: { requiresAuth: true } },
+  { path: '/cabut/progress', component: CabutProgressPP, meta: { requiresAuth: true } },
+
+  // Lipat Division Routes
+  { path: '/lipat/lkh', component: LipatLkhList, meta: { requiresAuth: true } },
+  { path: '/lipat/lkh/baru', component: LipatLkhForm, meta: { requiresAuth: true } },
+  { path: '/lipat/master', component: LipatMasterData, meta: { requiresAuth: true } },
+  { path: '/lipat/progress', component: LipatProgressPP, meta: { requiresAuth: true } },
+
+  // Sortir Division Routes
+  { path: '/sortir/lkh', component: SortirLkhList, meta: { requiresAuth: true } },
+  { path: '/sortir/lkh/baru', component: SortirLkhForm, meta: { requiresAuth: true } },
+  { path: '/sortir/master', component: SortirMasterData, meta: { requiresAuth: true } },
+  { path: '/sortir/progress', component: SortirProgressPP, meta: { requiresAuth: true } },
+
+  // PPIC Division Routes
+  { path: '/ppic/jadwal', component: PpicJadwal, meta: { requiresAuth: true } },
+  { path: '/jadwal', redirect: '/ppic/jadwal', meta: { requiresAuth: true } },
+  { path: '/ppic/lkh', component: PpicLkhList, meta: { requiresAuth: true } },
+  { path: '/ppic/lkh/baru', component: PpicLkhForm, meta: { requiresAuth: true } },
+  { path: '/ppic/master', component: PpicMasterData, meta: { requiresAuth: true } },
+
+  // Shared Routes (Progress PP dapat dilihat semua departemen)
   { path: '/progress', component: ProgressPP, meta: { requiresAuth: true } },
   { path: '/progress-data', component: ProgressPP, meta: { requiresAuth: true } },
-  { path: '/cetak/progress', component: CetakProgressPP, meta: { requiresAuth: true } },
-  { path: '/completing/progress', component: CompletingProgressPP, meta: { requiresAuth: true } },
-  { path: '/cabut/progress', component: CabutProgressPP, meta: { requiresAuth: true } },
-  { path: '/sortir/progress', component: SortirProgressPP, meta: { requiresAuth: true } },
-  { path: '/lipat/progress', component: LipatProgressPP, meta: { requiresAuth: true } },
-  { path: '/lkh/baru', component: LkhForm, meta: { requiresAuth: true } },
-  { path: '/lkh/edit/:id', component: LkhForm, meta: { requiresAuth: true } },
-  { path: '/lkh', component: LkhList, meta: { requiresAuth: true } },
-  { path: '/master', component: MasterData, meta: { requiresAuth: true } },
+
+  // Fallback routes untuk Generic /lkh, /lkh/baru, /master (Di-handle di beforeEach)
+  { path: '/lkh', component: SortirLkhList, meta: { requiresAuth: true } },
+  { path: '/lkh/baru', component: SortirLkhForm, meta: { requiresAuth: true } },
+  { path: '/lkh/edit/:id', component: SortirLkhForm, meta: { requiresAuth: true } },
+  { path: '/master', component: SortirMasterData, meta: { requiresAuth: true } },
+
+  // Profil, Akun & Log
+  { path: '/profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/users', component: AccountManagement, meta: { requiresAuth: true } },
   { path: '/account-management', component: AccountManagement, meta: { requiresAuth: true } },
   { path: '/logs', component: ActivityLog, meta: { requiresAuth: true } },
-  { path: '/profile', component: Profile, meta: { requiresAuth: true } }
+
+  // Root
+  { path: '/', component: SortirDashboard, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({
@@ -96,8 +160,36 @@ router.beforeEach((to, from, next) => {
   // 3. Jika user mengakses root '/', arahkan otomatis ke dashboard divisinya
   if (to.path === '/' && authState.value.isAuthenticated) {
     const target = getDivisionDashboardRoute(authState.value)
-    if (target !== '/') {
-      next({ path: target, replace: true })
+    next({ path: target, replace: true })
+    return
+  }
+
+  // 4. Pembatasan akses dashboard antar divisi:
+  // User hanya boleh mengakses dashboard divisi masing-masing (misal cetak hanya bisa akses /cetak)
+  const divisionDashboards = ['/cetak', '/completing', '/cabut', '/lipat', '/sortir', '/ppic']
+  if (divisionDashboards.includes(to.path) && authState.value.isAuthenticated) {
+    const allowed = getDivisionDashboardRoute(authState.value)
+    if (to.path !== allowed) {
+      next({ path: allowed, replace: true })
+      return
+    }
+  }
+
+  // 5. Redirect rute generik /lkh, /lkh/baru, /master ke divisi pengguna aktif
+  if (authState.value.isAuthenticated) {
+    const div = (authState.value?.divisi || authState.value?.role || 'sortir').toLowerCase()
+    const validDiv = ['cetak', 'completing', 'cabut', 'lipat', 'sortir', 'ppic'].includes(div) ? div : 'sortir'
+    
+    if (to.path === '/lkh') {
+      next({ path: `/${validDiv}/lkh`, replace: true })
+      return
+    }
+    if (to.path === '/lkh/baru') {
+      next({ path: `/${validDiv}/lkh/baru`, replace: true })
+      return
+    }
+    if (to.path === '/master') {
+      next({ path: `/${validDiv}/master`, replace: true })
       return
     }
   }
@@ -108,6 +200,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   const titles = {
     '/ppic': 'PPIC & Penjadwalan Kapasitas • PT Pura Barutama Unit Offset',
+    '/ppic/jadwal': 'Jadwal & Gantt Chart Kapasitas • PT Pura Barutama Unit Offset',
     '/cetak': 'Divisi Cetak • PT Pura Barutama Unit Offset',
     '/completing': 'Divisi Completing • PT Pura Barutama Unit Offset',
     '/cabut': 'Divisi Cabut • PT Pura Barutama Unit Offset',
@@ -118,11 +211,6 @@ router.afterEach((to) => {
     '/loginroadmap': 'Login Editor Roadmap • PT Pura Barutama Unit Offset',
     '/login': 'Login • PT Pura Barutama Unit Offset',
     '/progress': 'Progress PP • PT Pura Barutama Unit Offset',
-    '/lkh': 'Data LKH • PT Pura Barutama Unit Offset',
-    '/lkh/baru': 'Form LKH Baru • PT Pura Barutama Unit Offset',
-    '/master': 'Master Data • PT Pura Barutama Unit Offset',
-    '/users': 'Account Management • PT Pura Barutama Unit Offset',
-    '/logs': 'Log Aktivitas • PT Pura Barutama Unit Offset',
     '/profile': 'Profil Akun • PT Pura Barutama Unit Offset'
   }
   document.title = titles[to.path] || 'PT Pura Barutama Unit Offset'

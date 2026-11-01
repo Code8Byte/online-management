@@ -3,7 +3,7 @@
     <!-- Desktop Header (Hanya tampil saat user sudah login di dashboard sistem) -->
     <header v-if="showNavbar" class="app-header no-print">
       <nav class="desktop-navbar">
-        <router-link to="/" class="brand-wrapper">
+        <router-link :to="dashboardRoute" class="brand-wrapper">
           <img :src="logoImg" alt="Pura Group" class="brand-logo-img" />
           <div>
             <div class="brand-title">{{ currentHeaderTitle }}</div>
@@ -11,48 +11,35 @@
           </div>
         </router-link>
         
-        <!-- Navigation Links saat login (Semua fitur tertampil tanpa pembatasan view) -->
+        <!-- Navigation Links saat login -->
         <div class="nav-links">
           <router-link :to="dashboardRoute" class="nav-link">
             <span>📊</span> Dashboard
           </router-link>
-          
-          <!-- Division Quick Selector (Bisa melihat dashboard divisi manapun) -->
-          <div class="admin-div-selector">
-            <select :value="$route.path" @change="$router.push($event.target.value)" class="nav-div-select" title="Pindah Pratinjau Dashboard Divisi">
-              <option value="/sortir">Divisi Sortir</option>
-              <option value="/cetak">Divisi Cetak</option>
-              <option value="/completing">Divisi Completing</option>
-              <option value="/cabut">Divisi Cabut</option>
-              <option value="/lipat">Divisi Lipat</option>
-              <option value="/ppic">PPIC &amp; Scheduling</option>
-            </select>
-          </div>
 
-          <router-link to="/ppic" class="nav-link">
-            <span>📅</span> PPIC &amp; Jadwal
+          <!-- Menu Jadwal (Khusus PPIC, nama ringkas 'Jadwal') -->
+          <router-link v-if="userDivisi === 'ppic'" to="/ppic/jadwal" class="nav-link">
+            <span>📅</span> Jadwal
           </router-link>
 
+          <!-- Progress PP (Dapat dilihat oleh semua departemen) -->
           <router-link to="/progress" class="nav-link">
             <span>📈</span> Progress PP
           </router-link>
-          <router-link to="/lkh" class="nav-link">
+
+          <!-- Data LKH spesifik divisi pengguna aktif -->
+          <router-link :to="'/' + userDivisi + '/lkh'" class="nav-link">
             <span>📋</span> Data LKH
           </router-link>
-          <router-link to="/lkh/baru" class="nav-link">
+
+          <!-- Form Isi LKH spesifik divisi pengguna aktif -->
+          <router-link :to="'/' + userDivisi + '/lkh/baru'" class="nav-link">
             <span>✍️</span> Isi LKH
           </router-link>
-          <router-link to="/master" class="nav-link">
+
+          <!-- Master Data spesifik divisi pengguna aktif -->
+          <router-link :to="'/' + userDivisi + '/master'" class="nav-link">
             <span>⚙️</span> Master Data
-          </router-link>
-          <router-link to="/users" class="nav-link">
-            <span>👥</span> Account Management
-          </router-link>
-          <router-link to="/logs" class="nav-link">
-            <span>📜</span> Log Aktivitas
-          </router-link>
-          <router-link to="/roadmap" class="nav-link" title="Buka Roadmap Digitalisasi">
-            <span>🗺️</span> Roadmap
           </router-link>
         </div>
 
@@ -61,11 +48,8 @@
           <router-link to="/profile" class="user-badge" style="text-decoration: none; cursor: pointer; display: inline-flex; align-items: center;" title="Buka Profil & Ganti Password">
             <span>👤</span> {{ authState.username || 'Pengguna' }}
             <span class="badge badge-primary" style="margin-left: 6px; font-size: 0.72rem; text-transform: uppercase;">
-              STAFF • {{ authState.divisi || 'OFFSET' }}
+              STAFF • {{ userDivisi.toUpperCase() }}
             </span>
-          </router-link>
-          <router-link to="/profile" class="btn btn-secondary btn-sm" title="Profil & Ganti Password" style="padding: 0.35rem 0.65rem;">
-            ⚙️ Profil
           </router-link>
           <button @click="logout" class="btn btn-danger btn-sm" title="Keluar">
             Logout
@@ -76,7 +60,7 @@
 
     <!-- Mobile Top Bar (Android) (Hanya tampil saat user sudah login di dashboard sistem) -->
     <header v-if="showNavbar" class="mobile-topbar no-print">
-      <router-link to="/" class="brand-wrapper">
+      <router-link :to="dashboardRoute" class="brand-wrapper">
         <img :src="logoImg" alt="Pura Group" class="brand-logo-img-mobile" />
         <div>
           <div class="brand-title" style="font-size: 0.95rem;">{{ currentHeaderTitle }}</div>
@@ -84,17 +68,8 @@
         </div>
       </router-link>
       <div class="d-flex align-center gap-05">
-        <router-link to="/ppic" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="PPIC & Scheduling">
-          📅 PPIC
-        </router-link>
-        <router-link to="/users" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Account Management">
-          👥 Akun
-        </router-link>
-        <router-link to="/roadmap" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Roadmap Proyek">
-          🗺️ Roadmap
-        </router-link>
-        <router-link to="/logs" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Log Aktivitas">
-          📜 Log
+        <router-link v-if="userDivisi === 'ppic'" to="/ppic/jadwal" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Jadwal">
+          📅 Jadwal
         </router-link>
         <router-link to="/profile" class="user-badge" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Profil & Ganti Password">
           👤 {{ authState.username }}
@@ -124,21 +99,25 @@
         <span class="bottom-nav-icon">📊</span>
         <span>Dashboard</span>
       </router-link>
+      <router-link v-if="userDivisi === 'ppic'" to="/ppic/jadwal" class="bottom-nav-item">
+        <span class="bottom-nav-icon">📅</span>
+        <span>Jadwal</span>
+      </router-link>
       <router-link to="/progress" class="bottom-nav-item">
         <span class="bottom-nav-icon">📈</span>
         <span>Progress</span>
       </router-link>
-      <router-link to="/lkh" class="bottom-nav-item">
+      <router-link :to="'/' + userDivisi + '/lkh'" class="bottom-nav-item">
         <span class="bottom-nav-icon">📋</span>
         <span>Data LKH</span>
       </router-link>
-      <router-link to="/lkh/baru" class="bottom-nav-item">
+      <router-link :to="'/' + userDivisi + '/lkh/baru'" class="bottom-nav-item">
         <span class="bottom-nav-icon">✍️</span>
         <span>Isi LKH</span>
       </router-link>
-      <router-link to="/logs" class="bottom-nav-item">
-        <span class="bottom-nav-icon">📜</span>
-        <span>Log</span>
+      <router-link :to="'/' + userDivisi + '/master'" class="bottom-nav-item">
+        <span class="bottom-nav-icon">⚙️</span>
+        <span>Master</span>
       </router-link>
       <router-link to="/profile" class="bottom-nav-item">
         <span class="bottom-nav-icon">👤</span>
@@ -162,24 +141,38 @@ import { showConfirm, showAlert, showError } from './view/modal/modalService'
 const router = useRouter()
 const route = useRoute()
 
+const userDivisi = computed(() => {
+  const d = (authState.value?.divisi || authState.value?.role || 'sortir').toLowerCase()
+  if (['cetak', 'completing', 'cabut', 'lipat', 'sortir', 'ppic'].includes(d)) {
+    return d
+  }
+  return 'sortir'
+})
+
+const dashboardRoute = computed(() => {
+  return '/' + userDivisi.value
+})
+
 const currentHeaderTitle = computed(() => {
   const p = route.path
-  if (p === '/ppic') return 'PPIC & Penjadwalan Kapasitas'
-  if (p === '/cetak') return 'Divisi Cetak'
-  if (p === '/completing') return 'Divisi Completing'
-  if (p === '/cabut') return 'Divisi Cabut'
-  if (p === '/lipat') return 'Divisi Lipat'
-  if (p === '/sortir') return 'Divisi Sortir'
+  if (p === '/ppic') return 'PPIC'
+  if (p === '/ppic/jadwal' || p === '/jadwal') return 'Jadwal & Kapasitas'
+  if (p.startsWith('/cetak')) return 'Divisi Cetak'
+  if (p.startsWith('/completing')) return 'Divisi Completing'
+  if (p.startsWith('/cabut')) return 'Divisi Cabut'
+  if (p.startsWith('/lipat')) return 'Divisi Lipat'
+  if (p.startsWith('/sortir')) return 'Divisi Sortir'
+  if (p.startsWith('/ppic')) return 'PPIC'
   if (p === '/roadmap') return 'Roadmap Digitalisasi'
   if (p === '/progress' || p === '/progress-data') return 'Progress PP'
-  if (p.startsWith('/lkh')) return 'Sistem LKH'
-  if (p === '/master') return 'Master Data'
+  if (p.includes('/lkh')) return 'Data LKH'
+  if (p.includes('/master')) return 'Master Data'
   if (p === '/users' || p === '/account-management') return 'Manajemen Akun'
   if (p === '/logs') return 'Log Aktivitas'
   if (p === '/profile') return 'Profil Akun'
 
-  const d = (authState.value?.divisi || authState.value?.role || '').toLowerCase()
-  if (d === 'ppic') return 'PPIC & Penjadwalan Kapasitas'
+  const d = userDivisi.value
+  if (d === 'ppic') return 'PPIC'
   if (d === 'cetak') return 'Divisi Cetak'
   if (d === 'completing') return 'Divisi Completing'
   if (d === 'cabut') return 'Divisi Cabut'
@@ -198,17 +191,6 @@ const showNavbar = computed(() => {
   const p = route.path
   if (['/roadmap', '/login', '/loginroadmap', '/roadmap/login'].includes(p)) return false
   return true
-})
-
-const dashboardRoute = computed(() => {
-  const d = (authState.value?.divisi || authState.value?.role || '').toLowerCase()
-  if (d === 'ppic') return '/ppic'
-  if (d === 'cetak') return '/cetak'
-  if (d === 'completing') return '/completing'
-  if (d === 'cabut') return '/cabut'
-  if (d === 'lipat') return '/lipat'
-  if (d === 'sortir' || d === 'operator') return '/sortir'
-  return '/sortir'
 })
 
 const logout = async () => {
@@ -270,20 +252,6 @@ const logout = async () => {
   font-size: 0.85rem;
   font-weight: 600;
   color: #64748b;
-}
-.nav-div-select {
-  padding: 0.35rem 0.65rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #334155;
-  cursor: pointer;
-  outline: none;
-}
-.nav-div-select:focus {
-  border-color: #4f46e5;
 }
 .footer-logo {
   height: 24px;
