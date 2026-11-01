@@ -158,271 +158,7 @@ export function calculateJobLogistics({
 // ==========================================
 // 4. JADWAL SEED DENGAN RINCIAN JAM & MENIT
 // ==========================================
-const baseSchedules = [
-  // ----------------------------------------------------
-  // PP-2026-0840: Kemasan Herbal 150ml (Box Luar)
-  // Masuk Cetak: 01 Nov 08:00 WIB, Selesai per tahap jam:menit
-  // Batas Kirim: 03 Nov 16:00 WIB, Muatan: 96.000 Pcs / 10 Pallet (CDD)
-  // ----------------------------------------------------
-  {
-    id: 8401,
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    stage: 'cetak',
-    stage_num: 1,
-    mesin_id: 'sm23',
-    mesin_nama: 'SM 23 (Heidelberg Speedmaster 102)',
-    oplaag_pcs: 96000,
-    up_per_plano: 4,
-    plan_plano: 24300,
-    unit: 'plano',
-    plan_qty: 24300,
-    actual_output: 24300,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 08:00',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 10:52',
-    duration_minutes: 172,
-    actual_end_date: '2026-11-01 10:52',
-    deadline_datetime: '2026-11-03 16:00',
-    muatan_koli: 192,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8402,
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    stage: 'completing',
-    stage_num: 2,
-    mesin_id: 'hsf1',
-    mesin_nama: 'Hot Stamping Foil 1 & UV Gloss',
-    oplaag_pcs: 96000,
-    up_per_plano: 4,
-    plan_plano: 24000,
-    unit: 'plano',
-    plan_qty: 24000,
-    actual_output: 24000,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 11:20',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 16:40',
-    duration_minutes: 320,
-    actual_end_date: '2026-11-01 16:40',
-    deadline_datetime: '2026-11-03 16:00',
-    muatan_koli: 192,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8403,
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    stage: 'cabut',
-    stage_num: 3,
-    mesin_id: 'ms1',
-    mesin_nama: 'Bobst MS 1 (Die Plat 4 Up)',
-    oplaag_pcs: 96000,
-    up_per_plano: 4,
-    plan_plano: 24000,
-    unit: 'plano',
-    plan_qty: 24000,
-    actual_output: 18000,
-    progress: 75.0,
-    status: 'in_progress',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 17:10',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 21:10',
-    duration_minutes: 240,
-    actual_end_date: null,
-    deadline_datetime: '2026-11-03 16:00',
-    muatan_koli: 192,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8404,
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    stage: 'sortir',
-    stage_num: 4,
-    mesin_id: 'sortir_fs500',
-    mesin_nama: 'Focusight FS-500 Shark',
-    oplaag_pcs: 96000,
-    up_per_plano: 4,
-    plan_plano: 24000,
-    unit: 'pcs',
-    plan_qty: 96000,
-    actual_output: 0,
-    progress: 0.0,
-    status: 'antri',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 21:30',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 23:54',
-    duration_minutes: 144,
-    actual_end_date: null,
-    deadline_datetime: '2026-11-03 16:00',
-    muatan_koli: 192,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8405,
-    no_pp: 'PP-2026-0840',
-    produk_nama: 'Kemasan Herbal 150ml (Box Luar)',
-    stage: 'lipat',
-    stage_num: 5,
-    mesin_id: 'gluer_herui',
-    mesin_nama: 'Herui Speed Gluer',
-    oplaag_pcs: 96000,
-    up_per_plano: 4,
-    plan_plano: 24000,
-    unit: 'pcs',
-    plan_qty: 96000,
-    actual_output: 0,
-    progress: 0.0,
-    status: 'antri',
-    start_date: '2026-11-02',
-    start_datetime: '2026-11-02 07:30',
-    planned_end_date: '2026-11-02',
-    planned_end_datetime: '2026-11-02 10:15',
-    duration_minutes: 165,
-    actual_end_date: null,
-    deadline_datetime: '2026-11-03 16:00',
-    muatan_koli: 192,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-
-  // ----------------------------------------------------
-  // PP-2026-0841: Box Ampul Farmasi 10ml
-  // Masuk Mesin: 01 Nov 13:00 WIB, Batas Kirim: 02 Nov 17:00 WIB
-  // ----------------------------------------------------
-  {
-    id: 8411,
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    stage: 'cetak',
-    stage_num: 1,
-    mesin_id: 'kba106',
-    mesin_nama: 'KBA Rapida 106 High Speed',
-    oplaag_pcs: 100000,
-    up_per_plano: 6,
-    plan_plano: 17000,
-    unit: 'plano',
-    plan_qty: 17000,
-    actual_output: 17000,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 11:30',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 13:12',
-    duration_minutes: 102,
-    actual_end_date: '2026-11-01 13:12',
-    deadline_datetime: '2026-11-02 17:00',
-    muatan_koli: 200,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8412,
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    stage: 'cabut',
-    stage_num: 2,
-    mesin_id: 'ms2',
-    mesin_nama: 'Bobst MS 2 Presisi',
-    oplaag_pcs: 100000,
-    up_per_plano: 6,
-    plan_plano: 16800,
-    unit: 'plano',
-    plan_qty: 16800,
-    actual_output: 16800,
-    progress: 100.0,
-    status: 'selesai',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 13:40',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 16:15',
-    duration_minutes: 155,
-    actual_end_date: '2026-11-01 16:15',
-    deadline_datetime: '2026-11-02 17:00',
-    muatan_koli: 200,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8413,
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    stage: 'sortir',
-    stage_num: 3,
-    mesin_id: 'sortir_fs600',
-    mesin_nama: 'Focusight FS-600 Sheet',
-    oplaag_pcs: 100000,
-    up_per_plano: 6,
-    plan_plano: 16800,
-    unit: 'pcs',
-    plan_qty: 100000,
-    actual_output: 60000,
-    progress: 60.0,
-    status: 'in_progress',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 16:45',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 19:36',
-    duration_minutes: 171,
-    actual_end_date: null,
-    deadline_datetime: '2026-11-02 17:00',
-    muatan_koli: 200,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  },
-  {
-    id: 8414,
-    no_pp: 'PP-2026-0841',
-    produk_nama: 'Box Ampul Farmasi 10ml',
-    stage: 'lipat',
-    stage_num: 4,
-    mesin_id: 'gluer_ml1',
-    mesin_nama: 'Mesin Lipat 1 Crash Lock',
-    oplaag_pcs: 100000,
-    up_per_plano: 6,
-    plan_plano: 16800,
-    unit: 'pcs',
-    plan_qty: 100000,
-    actual_output: 0,
-    progress: 0.0,
-    status: 'antri',
-    start_date: '2026-11-01',
-    start_datetime: '2026-11-01 20:00',
-    planned_end_date: '2026-11-01',
-    planned_end_datetime: '2026-11-01 23:20',
-    duration_minutes: 200,
-    actual_end_date: null,
-    deadline_datetime: '2026-11-02 17:00',
-    muatan_koli: 200,
-    muatan_pallet: 10,
-    armada: 'Colt Diesel Double (CDD)',
-    ritase: 1
-  }
-]
-
+const baseSchedules = []
 
 // ==========================================
 // 5.1 SYNC DENGAN DATABASE MYSQL VIA API
@@ -430,7 +166,7 @@ const baseSchedules = [
 export async function fetchSchedulesFromApi() {
   try {
     const res = await apiFetch('ppic.php?action=gantt')
-    if (Array.isArray(res) && res.length > 0) {
+    if (Array.isArray(res)) {
       schedulesState.value = res.map(task => ({
         ...task,
         id: Number(task.id),
@@ -599,6 +335,28 @@ export function addPpicJobOrderSchedule(payload) {
 
   // Simpan ke state teratas
   schedulesState.value.unshift(...newTasks)
+
+  // Persist ke Database MySQL
+  apiFetch('ppic.php?action=create_pp', {
+    method: 'POST',
+    body: JSON.stringify({
+      no_pp,
+      produk_nama: produk_nama || 'Packaging Box',
+      oplaag_pcs: Number(oplaag_pcs),
+      up_per_plano: Number(up_per_plano),
+      total_plano: totalPlano,
+      start_datetime: start_datetime,
+      deadline_datetime: deadlineDateTime,
+      muatan_koli: logistics.totalKoli,
+      muatan_pallet: logistics.totalPallet,
+      armada: logistics.armada.nama,
+      ritase: logistics.ritase,
+      stages: newTasks
+    })
+  }).then(() => {
+    fetchSchedulesFromApi()
+  }).catch(e => console.error('Failed to create PP in database:', e))
+
   return {
     tasks: newTasks,
     logistics,

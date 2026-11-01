@@ -382,14 +382,28 @@
 
           <div class="grid grid-2 gap-1 mb-1">
             <div class="form-group">
-              <label>Jam &amp; Tanggal Mulai Masuk Mesin <span class="text-danger">*</span></label>
-              <input type="text" v-model="editForm.start_datetime" class="form-control" required placeholder="YYYY-MM-DD HH:mm" />
-              <small class="text-muted">Format: YYYY-MM-DD HH:mm (contoh: 2026-11-01 08:00)</small>
+              <label>📅 Tanggal &amp; Jam Mulai Masuk Mesin <span class="text-danger">*</span></label>
+              <input
+                type="datetime-local"
+                v-model="editForm.start_datetime"
+                class="form-control font-bold"
+                required
+                style="cursor: pointer; background: #fff; font-size: 1rem;"
+                @click="$event.target.showPicker && $event.target.showPicker()"
+              />
+              <small class="text-muted">Klik kotak untuk membuka visual kalender &amp; jam masuk.</small>
             </div>
             <div class="form-group">
-              <label>Batas Maksimal Pengiriman (Deadline) <span class="text-danger">*</span></label>
-              <input type="text" v-model="editForm.deadline_datetime" class="form-control" required placeholder="YYYY-MM-DD HH:mm" />
-              <small class="text-muted">Format: YYYY-MM-DD HH:mm (contoh: 2026-11-03 16:00)</small>
+              <label>📅 Batas Maksimal Pengiriman (Deadline) <span class="text-danger">*</span></label>
+              <input
+                type="datetime-local"
+                v-model="editForm.deadline_datetime"
+                class="form-control font-bold"
+                required
+                style="cursor: pointer; background: #fff; font-size: 1rem;"
+                @click="$event.target.showPicker && $event.target.showPicker()"
+              />
+              <small class="text-muted">Klik kotak untuk membuka visual kalender &amp; jam deadline.</small>
             </div>
           </div>
 
@@ -585,6 +599,11 @@ const openViewModal = (pp) => {
   selectedPp.value = pp
 }
 
+const toDatetimeLocal = (str) => {
+  if (!str) return ''
+  return str.replace(' ', 'T').slice(0, 16)
+}
+
 // Modal Edit
 const openEditModal = (pp) => {
   editingPp.value = pp
@@ -593,8 +612,8 @@ const openEditModal = (pp) => {
     produk_nama: pp.produk_nama,
     oplaag_pcs: pp.oplaag_pcs,
     up_per_plano: pp.up_per_plano,
-    start_datetime: pp.start_datetime,
-    deadline_datetime: pp.deadline_datetime,
+    start_datetime: toDatetimeLocal(pp.start_datetime),
+    deadline_datetime: toDatetimeLocal(pp.deadline_datetime),
     muatan_koli: pp.muatan_koli,
     muatan_pallet: pp.muatan_pallet,
     armada: pp.armada,
@@ -603,13 +622,16 @@ const openEditModal = (pp) => {
 }
 
 const saveEditPp = async () => {
+  const startDt = (editForm.value.start_datetime || '').replace('T', ' ')
+  const deadlineDt = (editForm.value.deadline_datetime || '').replace('T', ' ')
+
   updatePpicJobOrder({
     no_pp: editForm.value.no_pp,
     produk_nama: editForm.value.produk_nama,
     oplaag_pcs: editForm.value.oplaag_pcs,
     up_per_plano: editForm.value.up_per_plano,
-    start_datetime: editForm.value.start_datetime,
-    deadline_datetime: editForm.value.deadline_datetime,
+    start_datetime: startDt,
+    deadline_datetime: deadlineDt,
     muatan_koli: editForm.value.muatan_koli,
     muatan_pallet: editForm.value.muatan_pallet,
     armada: editForm.value.armada,

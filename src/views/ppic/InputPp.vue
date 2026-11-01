@@ -122,15 +122,33 @@
 
       <!-- Section 2: Jadwal Masuk Mesin & Perhitungan Jam-Menit -->
       <h4 class="form-sec-title">2. Alokasi Masuk Mesin &amp; Perhitungan Durasi (Presisi Jam &amp; Menit)</h4>
-      <div class="grid grid-2 gap-1 mb-1">
-        <div class="form-group">
-          <label>Tanggal Mulai Masuk Mesin Cetak <span class="text-danger">*</span></label>
-          <input type="date" v-model="form.start_date" class="form-control" required />
-        </div>
-        <div class="form-group">
-          <label>Jam &amp; Menit Masuk Mesin (Shift Mulai) <span class="text-danger">*</span></label>
-          <input type="time" v-model="form.start_time" class="form-control font-bold" required />
-          <small class="text-muted">Waktu mulai cetak di mesin (WIB)</small>
+      <div class="card mb-1 p-1" style="background: #ffffff; border: 1px solid #e2e8f0;">
+        <div class="form-group mb-05">
+          <label style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📅</span> Tanggal &amp; Jam Mulai Masuk Mesin Cetak <span class="text-danger">*</span>
+          </label>
+          <div class="d-flex gap-08 align-center flex-wrap">
+            <input
+              type="datetime-local"
+              v-model="form.start_datetime"
+              class="form-control font-bold"
+              style="font-size: 1.05rem; max-width: 320px; cursor: pointer; background: #fff;"
+              required
+              @click="$event.target.showPicker && $event.target.showPicker()"
+            />
+            <div class="d-flex gap-05 align-center flex-wrap">
+              <button type="button" class="btn btn-secondary btn-sm" @click="setStartPreset('today_morning')">
+                Hari Ini 08:00
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="setStartPreset('today_afternoon')">
+                Hari Ini 13:00
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="setStartPreset('tomorrow_morning')">
+                Besok 08:00
+              </button>
+            </div>
+          </div>
+          <small class="text-muted">Klik kotak input di atas untuk membuka popup kalender &amp; waktu (WIB) tanpa perlu mengetik manual.</small>
         </div>
       </div>
 
@@ -253,16 +271,33 @@
 
       <!-- Section 3: Batas Pengiriman & Muatan Kirim -->
       <h4 class="form-sec-title">3. Batas Pengiriman (Deadline) &amp; Rincian Muatan Logistik</h4>
-      <div class="grid grid-2 gap-1 mb-1">
-        <div class="form-group">
-          <label>Batas Hari / Tanggal Pengiriman <span class="text-danger">*</span></label>
-          <input type="date" v-model="form.deadline_date" class="form-control" required />
-          <small class="text-muted">Hari pengiriman yang diminta pelanggan</small>
-        </div>
-        <div class="form-group">
-          <label>Jam Maksimal Pengiriman (Deadline Hour) <span class="text-danger">*</span></label>
-          <input type="time" v-model="form.deadline_time" class="form-control font-bold" required />
-          <small class="text-muted">Waktu maksimal tiba / muat di ekspedisi (WIB)</small>
+      <div class="card mb-1 p-1" style="background: #ffffff; border: 1px solid #e2e8f0;">
+        <div class="form-group mb-05">
+          <label style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📅</span> Batas Hari &amp; Jam Maksimal Pengiriman (Deadline Kalender) <span class="text-danger">*</span>
+          </label>
+          <div class="d-flex gap-08 align-center flex-wrap">
+            <input
+              type="datetime-local"
+              v-model="form.deadline_datetime"
+              class="form-control font-bold"
+              style="font-size: 1.05rem; max-width: 320px; cursor: pointer; background: #fff;"
+              required
+              @click="$event.target.showPicker && $event.target.showPicker()"
+            />
+            <div class="d-flex gap-05 align-center flex-wrap">
+              <button type="button" class="btn btn-secondary btn-sm" @click="setDeadlinePreset(1, '16:00')">
+                +1 Hari (16:00)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="setDeadlinePreset(2, '16:00')">
+                +2 Hari (16:00)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="setDeadlinePreset(3, '17:00')">
+                +3 Hari (17:00)
+              </button>
+            </div>
+          </div>
+          <small class="text-muted">Klik kotak kalender untuk memilih tanggal batas kirim &amp; jam tiba yang diminta pelanggan.</small>
         </div>
       </div>
 
@@ -333,7 +368,7 @@
             <div style="font-size: 0.95rem; font-weight: 800;" :class="deliveryEvaluation.isSafe ? 'text-success' : 'text-danger'">
               Tiba: {{ deliveryEvaluation.estArrival }} WIB
             </div>
-            <small class="text-muted">Deadline: <b>{{ form.deadline_date }} {{ form.deadline_time }} WIB</b></small>
+            <small class="text-muted">Deadline: <b>{{ (form.deadline_datetime || '').replace('T', ' ') }} WIB</b></small>
           </div>
         </div>
       </div>
@@ -381,10 +416,8 @@ const form = ref({
   oplaag_pcs: 100000,
   up_per_plano: 4,
   insheet_percent: 2.0,
-  start_date: CURRENT_SYSTEM_DATE,
-  start_time: '08:00',
-  deadline_date: '2026-11-03',
-  deadline_time: '16:00',
+  start_datetime: `${CURRENT_SYSTEM_DATE}T08:00`,
+  deadline_datetime: `${new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0]}T16:00`,
   pcs_per_koli: 500,
   koli_per_pallet: 20,
   berat_pcs_gram: 25,
@@ -399,6 +432,28 @@ const form = ref({
     { stage: 'lipat', mesin_id: 'gluer_herui', enabled: true }
   ]
 })
+
+const setStartPreset = (type) => {
+  const d = new Date()
+  if (type === 'tomorrow_morning') {
+    d.setDate(d.getDate() + 1)
+    const ymd = d.toISOString().split('T')[0]
+    form.value.start_datetime = `${ymd}T08:00`
+  } else if (type === 'today_afternoon') {
+    const ymd = d.toISOString().split('T')[0]
+    form.value.start_datetime = `${ymd}T13:00`
+  } else {
+    const ymd = d.toISOString().split('T')[0]
+    form.value.start_datetime = `${ymd}T08:00`
+  }
+}
+
+const setDeadlinePreset = (addDays, timeStr) => {
+  const d = new Date()
+  d.setDate(d.getDate() + addDays)
+  const ymd = d.toISOString().split('T')[0]
+  form.value.deadline_datetime = `${ymd}T${timeStr}`
+}
 
 const getMachinesByStage = (stage) => {
   return masterMesinPPIC.filter(m => m.stage === stage)
@@ -420,7 +475,8 @@ const logisticsCalc = computed(() => {
 })
 
 const stageEstimations = computed(() => {
-  let currentDt = `${form.value.start_date} ${form.value.start_time}`
+  let currentDt = (form.value.start_datetime || '').replace('T', ' ')
+  if (!currentDt) currentDt = `${CURRENT_SYSTEM_DATE} 08:00`
   const totalPlano = calcPlano.value.totalPlano
   const oplaag = Number(form.value.oplaag_pcs) || 0
 
@@ -451,7 +507,7 @@ const stageEstimations = computed(() => {
 
 const lastStageEndDateTime = computed(() => {
   const activeEstimations = stageEstimations.value.filter(s => s.end !== '-')
-  if (activeEstimations.length === 0) return `${form.value.start_date} ${form.value.start_time}`
+  if (activeEstimations.length === 0) return (form.value.start_datetime || '').replace('T', ' ')
   return activeEstimations[activeEstimations.length - 1].end
 })
 
@@ -461,7 +517,7 @@ const deliveryEvaluation = computed(() => {
   const loadingTimeMinutes = 60
   const travelTimeMinutes = (form.value.lead_time_kirim_jam || 3) * 60
   const estArrival = addMinutesToDateTime(prodEnd, loadingTimeMinutes + travelTimeMinutes)
-  const deadline = `${form.value.deadline_date} ${form.value.deadline_time || '17:00'}`
+  const deadline = (form.value.deadline_datetime || '').replace('T', ' ') || `${CURRENT_SYSTEM_DATE} 17:00`
 
   const marginMinutes = diffMinutes(estArrival, deadline)
   const isSafe = marginMinutes >= 0
@@ -494,15 +550,21 @@ const handleSubmit = async () => {
     return
   }
 
-  const result = addPpicJobOrderSchedule({
+  const startDt = (form.value.start_datetime || '').replace('T', ' ')
+  const deadlineDt = (form.value.deadline_datetime || '').replace('T', ' ')
+  const deadlineParts = deadlineDt.split(' ')
+  const deadlineDate = deadlineParts[0] || CURRENT_SYSTEM_DATE
+  const deadlineTime = deadlineParts[1] || '17:00'
+
+  addPpicJobOrderSchedule({
     no_pp: form.value.no_pp,
     produk_nama: form.value.produk_nama,
     oplaag_pcs: form.value.oplaag_pcs,
     up_per_plano: form.value.up_per_plano,
     insheet_percent: form.value.insheet_percent,
-    start_datetime: `${form.value.start_date} ${form.value.start_time}`,
-    deadline_date: form.value.deadline_date,
-    deadline_time: form.value.deadline_time,
+    start_datetime: startDt,
+    deadline_date: deadlineDate,
+    deadline_time: deadlineTime,
     pcs_per_koli: form.value.pcs_per_koli,
     koli_per_pallet: form.value.koli_per_pallet,
     berat_pcs_gram: form.value.berat_pcs_gram,
@@ -514,9 +576,9 @@ const handleSubmit = async () => {
   const msg =
     `Job Order ${form.value.no_pp} berhasil dirilis ke dalam sistem produksi!\n` +
     `• Total Kebutuhan Plano: ${formatNumber(calcPlano.value.totalPlano)} plano (${form.value.up_per_plano} Up)\n` +
-    `• Jam Mulai Cetak: ${form.value.start_date} ${form.value.start_time} WIB\n` +
-    `• Muatan Logistik: ${formatNumber(logisticsCalc.value.totalKoli)} Koli (${formatNumber(logisticsCalc.value.totalPallet)} Pallet) &bull; ${logisticsCalc.value.ritase} Ritase ${logisticsCalc.value.armada.nama}\n` +
-    `• Batas Pengiriman: ${form.value.deadline_date} ${form.value.deadline_time} WIB\n` +
+    `• Jam Mulai Cetak: ${startDt} WIB\n` +
+    `• Muatan Logistik: ${formatNumber(logisticsCalc.value.totalKoli)} Koli (${formatNumber(logisticsCalc.value.totalPallet)} Pallet) • ${logisticsCalc.value.ritase} Ritase ${logisticsCalc.value.armada.nama}\n` +
+    `• Batas Pengiriman: ${deadlineDt} WIB\n` +
     `• Evaluasi: ${deliveryEvaluation.value.marginText}`
 
   await showAlert(msg, {

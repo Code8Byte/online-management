@@ -125,7 +125,7 @@ const loadLkh = async () => {
   loading.value = true
   try {
     const res = await apiFetch('lkh.php?action=list&divisi=completing')
-    if (res && res.data && res.data.length > 0) {
+    if (res && Array.isArray(res.data)) {
       lkhCompletingList.value = res.data.map(item => ({
         id: item.id,
         tanggal: item.tanggal,
