@@ -12,36 +12,36 @@
       </p>
     </section>
 
-    <!-- 2. Tombol Aksi Operator (CC, LKH, STB, Kiriman) -->
+    <!-- 2. Tombol Aksi Operator (CC, LKH, STB, Kiriman) - DITANGGUHKAN SEMENTARA -->
     <section class="op-actions-row">
-      <button type="button" class="op-act act-cc" @click="openModalCC">
+      <button type="button" class="op-act act-cc op-act-suspended" @click="handleSuspendedExport('Cost Control (CC)')">
         <span class="op-act-icon">CC</span>
         <span class="op-act-text">
-          <b>Cost Control</b>
+          <b>Cost Control <i class="op-soon">Ditangguhkan</i></b>
           <small>Export laporan CC</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-lkh" @click="openModalLkh">
+      <button type="button" class="op-act act-lkh op-act-suspended" @click="handleSuspendedExport('LKH Produksi (Excel)')">
         <span class="op-act-icon">XL</span>
         <span class="op-act-text">
-          <b>LKH Produksi</b>
+          <b>LKH Produksi <i class="op-soon">Ditangguhkan</i></b>
           <small>Export Excel LKH</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-soon" @click="openBlankMenu('STB Distribusi')">
+      <button type="button" class="op-act act-soon op-act-suspended" @click="handleSuspendedExport('STB Distribusi')">
         <span class="op-act-icon">ST</span>
         <span class="op-act-text">
-          <b>STB <i class="op-soon">Segera hadir</i></b>
+          <b>STB <i class="op-soon">Ditangguhkan</i></b>
           <small>Distribusi STB</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-soon" @click="openBlankMenu('Status Kiriman')">
+      <button type="button" class="op-act act-soon op-act-suspended" @click="handleSuspendedExport('Status Kiriman')">
         <span class="op-act-icon">KR</span>
         <span class="op-act-text">
-          <b>Kiriman <i class="op-soon">Segera hadir</i></b>
+          <b>Kiriman <i class="op-soon">Ditangguhkan</i></b>
           <small>Status pengiriman</small>
         </span>
       </button>
@@ -366,6 +366,13 @@ const submitExportLkh = () => {
   showSuccess(
     `Laporan LKH Produksi (.xlsx) ${props.divisionName}\nTanggal: ${formLkh.tanggal}\nShift: ${formLkh.shift}\n\nLaporan berhasil diexport.`,
     { title: 'Export LKH Berhasil' }
+  )
+}
+
+const handleSuspendedExport = (featureName) => {
+  showAlert(
+    `Tombol export untuk "${featureName}" saat ini ditangguhkan sementara karena fiturnya belum dibuat / masih dalam tahap pengembangan.`,
+    { title: 'Fitur Belum Tersedia' }
   )
 }
 

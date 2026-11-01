@@ -11,14 +11,14 @@
           </div>
         </router-link>
         
-        <!-- Navigation Links saat login -->
+        <!-- Navigation Links saat login (Semua fitur tertampil tanpa pembatasan view) -->
         <div class="nav-links">
           <router-link :to="dashboardRoute" class="nav-link">
             <span>📊</span> Dashboard
           </router-link>
           
-          <!-- Admin Division Quick Selector -->
-          <div v-if="authState.role === 'admin'" class="admin-div-selector">
+          <!-- Division Quick Selector (Bisa melihat dashboard divisi manapun) -->
+          <div class="admin-div-selector">
             <select :value="$route.path" @change="$router.push($event.target.value)" class="nav-div-select" title="Pindah Pratinjau Dashboard Divisi">
               <option value="/sortir">Divisi Sortir</option>
               <option value="/cetak">Divisi Cetak</option>
@@ -29,26 +29,26 @@
             </select>
           </div>
 
-          <router-link v-if="authState.role === 'admin' || authState.role === 'ppic' || authState.divisi === 'ppic'" to="/ppic" class="nav-link">
+          <router-link to="/ppic" class="nav-link">
             <span>📅</span> PPIC &amp; Jadwal
           </router-link>
 
-          <router-link v-if="authState.role !== 'operator'" to="/progress" class="nav-link">
+          <router-link to="/progress" class="nav-link">
             <span>📈</span> Progress PP
           </router-link>
           <router-link to="/lkh" class="nav-link">
             <span>📋</span> Data LKH
           </router-link>
-          <router-link v-if="authState.role !== 'viewer'" to="/lkh/baru" class="nav-link">
+          <router-link to="/lkh/baru" class="nav-link">
             <span>✍️</span> Isi LKH
           </router-link>
-          <router-link v-if="authState.role === 'admin'" to="/master" class="nav-link">
+          <router-link to="/master" class="nav-link">
             <span>⚙️</span> Master Data
           </router-link>
-          <router-link v-if="authState.role === 'admin'" to="/users" class="nav-link">
+          <router-link to="/users" class="nav-link">
             <span>👥</span> Account Management
           </router-link>
-          <router-link v-if="authState.role === 'admin'" to="/logs" class="nav-link">
+          <router-link to="/logs" class="nav-link">
             <span>📜</span> Log Aktivitas
           </router-link>
           <router-link to="/roadmap" class="nav-link" title="Buka Roadmap Digitalisasi">
@@ -60,8 +60,8 @@
         <div class="d-flex align-center gap-1">
           <router-link to="/profile" class="user-badge" style="text-decoration: none; cursor: pointer; display: inline-flex; align-items: center;" title="Buka Profil & Ganti Password">
             <span>👤</span> {{ authState.username || 'Pengguna' }}
-            <span class="badge" :class="authState.role === 'admin' ? 'badge-primary' : (authState.role === 'operator' ? 'badge-warning' : 'badge-info')" style="margin-left: 6px; font-size: 0.72rem; text-transform: uppercase;">
-              {{ authState.role }}
+            <span class="badge badge-primary" style="margin-left: 6px; font-size: 0.72rem; text-transform: uppercase;">
+              STAFF • {{ authState.divisi || 'OFFSET' }}
             </span>
           </router-link>
           <router-link to="/profile" class="btn btn-secondary btn-sm" title="Profil & Ganti Password" style="padding: 0.35rem 0.65rem;">
@@ -84,13 +84,16 @@
         </div>
       </router-link>
       <div class="d-flex align-center gap-05">
-        <router-link v-if="authState.role === 'admin'" to="/users" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Account Management">
+        <router-link to="/ppic" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="PPIC & Scheduling">
+          📅 PPIC
+        </router-link>
+        <router-link to="/users" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Account Management">
           👥 Akun
         </router-link>
         <router-link to="/roadmap" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Roadmap Proyek">
           🗺️ Roadmap
         </router-link>
-        <router-link v-if="authState.role === 'admin'" to="/logs" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Log Aktivitas Admin">
+        <router-link to="/logs" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Log Aktivitas">
           📜 Log
         </router-link>
         <router-link to="/profile" class="user-badge" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; text-decoration: none;" title="Buka Profil & Ganti Password">
@@ -121,7 +124,7 @@
         <span class="bottom-nav-icon">📊</span>
         <span>Dashboard</span>
       </router-link>
-      <router-link v-if="authState.role !== 'operator'" to="/progress" class="bottom-nav-item">
+      <router-link to="/progress" class="bottom-nav-item">
         <span class="bottom-nav-icon">📈</span>
         <span>Progress</span>
       </router-link>
@@ -129,11 +132,11 @@
         <span class="bottom-nav-icon">📋</span>
         <span>Data LKH</span>
       </router-link>
-      <router-link v-if="authState.role !== 'viewer'" to="/lkh/baru" class="bottom-nav-item">
+      <router-link to="/lkh/baru" class="bottom-nav-item">
         <span class="bottom-nav-icon">✍️</span>
         <span>Isi LKH</span>
       </router-link>
-      <router-link v-if="authState.role === 'admin'" to="/logs" class="bottom-nav-item">
+      <router-link to="/logs" class="bottom-nav-item">
         <span class="bottom-nav-icon">📜</span>
         <span>Log</span>
       </router-link>

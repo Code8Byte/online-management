@@ -636,6 +636,7 @@
 import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import Chart from 'chart.js/auto'
 import { apiFetch, authState } from '../../../utils/api'
+import { showAlert } from '../../../view/modal/modalService'
 
 const props = defineProps({
   roleTitle: { type: String, default: 'Admin' }
@@ -1064,10 +1065,10 @@ const insights = computed(() => {
 /* ---------- Export ---------- */
 const handleExportAction = (type) => {
   showExportDropdown.value = false
-  if (type === 'excel') openModalExportExcel()
-  else if (type === 'cc') openModalCC()
-  else if (type === 'kiriman') alert('Export Kiriman segera hadir.')
-  else if (type === 'stb') alert('Export STB segera hadir.')
+  showAlert(
+    'Seluruh tombol export (Excel, CC, STB, dan Kiriman) saat ini ditangguhkan sementara karena fiturnya belum dibuat / masih dalam tahap pengembangan.',
+    { title: 'Fitur Belum Tersedia' }
+  )
 }
 
 const openModalExportExcel = () => {

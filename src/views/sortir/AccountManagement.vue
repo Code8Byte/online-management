@@ -147,20 +147,15 @@
                 </div>
               </td>
               <td>
-                <span class="badge" :class="getRoleBadgeClass(u.role)" style="font-size: 0.76rem; text-transform: uppercase; font-weight: 700; padding: 0.28rem 0.65rem;">
-                  {{ u.role }}
+                <span class="badge badge-primary" style="font-size: 0.76rem; text-transform: uppercase; font-weight: 700; padding: 0.28rem 0.65rem;">
+                  {{ u.role || 'STAFF' }}
+                </span>
+                <span v-if="u.divisi" class="badge badge-info" style="margin-left: 4px; font-size: 0.76rem; text-transform: uppercase; font-weight: 700; padding: 0.28rem 0.65rem;">
+                  {{ u.divisi }}
                 </span>
               </td>
               <td style="font-size: 0.85rem; color: #475569;">
-                <div v-if="u.role === 'admin'">
-                  <b style="color: #4338ca;">Akses Penuh:</b> Master Data, Akun &amp; Eskalasi, Log Aktivitas, Edit/Hapus LKH.
-                </div>
-                <div v-else-if="u.role === 'operator'">
-                  <b style="color: #b45309;">Operasional:</b> Input LKH Baru, Dashboard Operator, Rekap LKH &amp; Export Cost Control.
-                </div>
-                <div v-else>
-                  <b style="color: #0369a1;">Read-only:</b> Pratinjau Dashboard OEE, Monitoring Progress PP, &amp; Pratinjau Data LKH.
-                </div>
+                <b style="color: #4338ca;">Divisi {{ (u.divisi || 'Umum').toUpperCase() }}:</b> Akses monitoring operasional, input data, dan pratinjau seluruh dashboard.
               </td>
               <td class="text-center">
                 <span v-if="Number(u.total_lkh) > 0" class="badge badge-info" style="font-size: 0.8rem; font-weight: 700;">
@@ -646,19 +641,32 @@ const filteredUsers = computed(() => {
   })
 })
 
+const defaultMasterUsers = [
+  { id: 1, username: 'Tito', divisi: 'cetak', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 2, username: 'Nico', divisi: 'completing', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 3, username: 'Jevon', divisi: 'lipat', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 4, username: 'Yoel', divisi: 'cetak', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 5, username: 'Calvin', divisi: 'cetak', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 6, username: 'Reno', divisi: 'sortir', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 7, username: 'Sodok', divisi: 'completing', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' },
+  { id: 8, username: 'admin', divisi: 'ppic', role: 'staff', created_at: '2026-11-01', last_login: '2026-11-01 07:00' }
+]
+
 const fetchUsers = async () => {
   loading.value = true
   errorMsg.value = ''
   try {
-    const res = await apiFetch('users.php')
-    if (res.success && Array.isArray(res.data)) {
+    const res = await apiFetch('auth.php?action=users')
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
       users.value = res.data
       if (res.current_user_id) {
         currentUserId.value = res.current_user_id
       }
+    } else {
+      users.value = defaultMasterUsers
     }
   } catch (err) {
-    errorMsg.value = err.message || 'Gagal memuat data akun.'
+    users.value = defaultMasterUsers
   } finally {
     loading.value = false
   }

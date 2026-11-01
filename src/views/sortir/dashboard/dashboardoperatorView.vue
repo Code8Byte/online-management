@@ -9,36 +9,36 @@
       </h1>
     </section>
 
-    <!-- 2. Tombol aksi -->
+    <!-- 2. Tombol aksi (DITANGGUHKAN SEMENTARA) -->
     <section class="op-actions-row">
-      <button type="button" class="op-act act-cc" @click="openModalCC">
+      <button type="button" class="op-act act-cc op-act-suspended" @click="handleSuspendedExport('Cost Control')">
         <span class="op-act-icon">CC</span>
         <span class="op-act-text">
-          <b>Cost Control</b>
+          <b>Cost Control <i class="op-soon">Ditangguhkan</i></b>
           <small>Export laporan CC</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-lkh" @click="openModalLkhOperator">
+      <button type="button" class="op-act act-lkh op-act-suspended" @click="handleSuspendedExport('LKH Produksi')">
         <span class="op-act-icon">XL</span>
         <span class="op-act-text">
-          <b>LKH Produksi</b>
+          <b>LKH Produksi <i class="op-soon">Ditangguhkan</i></b>
           <small>Export Excel LKH</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-soon" @click="openBlankMenu('STB')">
+      <button type="button" class="op-act act-soon op-act-suspended" @click="handleSuspendedExport('STB')">
         <span class="op-act-icon">ST</span>
         <span class="op-act-text">
-          <b>STB <i class="op-soon">Segera hadir</i></b>
+          <b>STB <i class="op-soon">Ditangguhkan</i></b>
           <small>Distribusi STB</small>
         </span>
       </button>
 
-      <button type="button" class="op-act act-soon" @click="openBlankMenu('Kiriman')">
+      <button type="button" class="op-act act-soon op-act-suspended" @click="handleSuspendedExport('Kiriman')">
         <span class="op-act-icon">KR</span>
         <span class="op-act-text">
-          <b>Kiriman <i class="op-soon">Segera hadir</i></b>
+          <b>Kiriman <i class="op-soon">Ditangguhkan</i></b>
           <small>Status pengiriman</small>
         </span>
       </button>
@@ -203,6 +203,14 @@
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import Chart from 'chart.js/auto'
 import { apiFetch, authState } from '../../../utils/api'
+import { showAlert } from '../../../view/modal/modalService'
+
+const handleSuspendedExport = (featureName) => {
+  showAlert(
+    `Tombol export untuk "${featureName}" saat ini ditangguhkan sementara karena fiturnya belum dibuat / masih dalam tahap pengembangan.`,
+    { title: 'Fitur Belum Tersedia' }
+  )
+}
 
 const OEE_TARGET = 85
 const loading = ref(false)

@@ -208,13 +208,8 @@ const roleBadgeClass = computed(() => {
 })
 
 const roleDescription = computed(() => {
-  if (authState.value.role === 'admin') {
-    return 'Administrator (Akses penuh seluruh modul, Master Data, dan Export Laporan)'
-  }
-  if (authState.value.role === 'operator') {
-    return 'Operator (Pengisian LKH, Rekap Data LKH, Dashboard & Export CC)'
-  }
-  return 'Viewer (Hanya Pratinjau / Monitoring Data & Dashboard LKH)'
+  const d = (authState.value.divisi || 'Offset').toUpperCase()
+  return `Staff Divisi ${d} • Akses operasional dan pemantauan sistem PT Pura Barutama Unit Offset`
 })
 
 const resetForm = () => {

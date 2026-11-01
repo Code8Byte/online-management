@@ -57,21 +57,21 @@ const routes = [
   // Root redirect placeholder
   { path: '/', component: SortirDashboard, meta: { requiresAuth: true } },
 
-  // Operational & Management Routes
+  // Operational & Management Routes (Tidak ada pembatasan view, semua dapat diakses)
   { path: '/progress', component: ProgressPP, meta: { requiresAuth: true } },
   { path: '/progress-data', component: ProgressPP, meta: { requiresAuth: true } },
   { path: '/cetak/progress', component: CetakProgressPP, meta: { requiresAuth: true } },
   { path: '/completing/progress', component: CompletingProgressPP, meta: { requiresAuth: true } },
   { path: '/cabut/progress', component: CabutProgressPP, meta: { requiresAuth: true } },
-  { path: '/lipat/progress', component: LipatProgressPP, meta: { requiresAuth: true } },
   { path: '/sortir/progress', component: SortirProgressPP, meta: { requiresAuth: true } },
-  { path: '/lkh/baru', component: LkhForm, meta: { requiresAuth: true, allowedRoles: ['admin', 'operator', 'sortir', 'cetak', 'completing', 'cabut', 'lipat'] } },
-  { path: '/lkh/edit/:id', component: LkhForm, meta: { requiresAuth: true, allowedRoles: ['admin', 'operator', 'sortir', 'cetak', 'completing', 'cabut', 'lipat'] } },
+  { path: '/lipat/progress', component: LipatProgressPP, meta: { requiresAuth: true } },
+  { path: '/lkh/baru', component: LkhForm, meta: { requiresAuth: true } },
+  { path: '/lkh/edit/:id', component: LkhForm, meta: { requiresAuth: true } },
   { path: '/lkh', component: LkhList, meta: { requiresAuth: true } },
-  { path: '/master', component: MasterData, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
-  { path: '/users', component: AccountManagement, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
-  { path: '/account-management', component: AccountManagement, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
-  { path: '/logs', component: ActivityLog, meta: { requiresAuth: true, allowedRoles: ['admin'] } },
+  { path: '/master', component: MasterData, meta: { requiresAuth: true } },
+  { path: '/users', component: AccountManagement, meta: { requiresAuth: true } },
+  { path: '/account-management', component: AccountManagement, meta: { requiresAuth: true } },
+  { path: '/logs', component: ActivityLog, meta: { requiresAuth: true } },
   { path: '/profile', component: Profile, meta: { requiresAuth: true } }
 ]
 
@@ -100,16 +100,6 @@ router.beforeEach((to, from, next) => {
       next({ path: target, replace: true })
       return
     }
-  }
-
-  // 4. Periksa role jika ada pembatasan
-  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(authState.value.role)) {
-    if (authState.value.role === 'viewer') {
-      next('/lkh')
-    } else {
-      next(getDivisionDashboardRoute(authState.value))
-    }
-    return
   }
 
   next()
