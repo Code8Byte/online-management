@@ -6,7 +6,7 @@
           <img :src="logoImg" alt="Pura Group Indonesia" class="login-logo" />
         </div>
         <h1 class="login-title">PT Pura Barutama Unit Offset</h1>
-        <p class="login-subtitle">Masuk ke Sistem Terintegrasi</p>
+        <p class="login-subtitle">Masuk ke Sistem Terintegrasi <span class="badge badge-secondary" style="font-size: 0.72rem; vertical-align: middle;">v0.1</span></p>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
@@ -52,7 +52,7 @@
 
       <div class="login-footer">
         <img :src="logoImg" alt="Pura Group" class="footer-logo" />
-        <span>&copy;2026 PT Pura Barutama Unit Offset. All Rights Reserved.</span>
+        <span>&copy;2026 PT Pura Barutama Unit Offset. All Rights Reserved. &bull; <b>v0.1</b></span>
       </div>
     </div>
   </div>

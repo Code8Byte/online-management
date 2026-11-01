@@ -6,7 +6,7 @@
         <router-link :to="dashboardRoute" class="brand-wrapper">
           <img :src="logoImg" alt="Pura Group" class="brand-logo-img" />
           <div>
-            <div class="brand-title">{{ currentHeaderTitle }}</div>
+            <div class="brand-title">{{ currentHeaderTitle }} <span class="badge badge-secondary" style="font-size: 0.68rem; vertical-align: middle; padding: 2px 6px;">v0.1</span></div>
             <div class="brand-subtitle">{{ currentHeaderSubtitle }}</div>
           </div>
         </router-link>
@@ -69,7 +69,7 @@
       <router-link :to="dashboardRoute" class="brand-wrapper">
         <img :src="logoImg" alt="Pura Group" class="brand-logo-img-mobile" />
         <div>
-          <div class="brand-title" style="font-size: 0.95rem;">{{ currentHeaderTitle }}</div>
+          <div class="brand-title" style="font-size: 0.95rem;">{{ currentHeaderTitle }} <span class="badge badge-secondary" style="font-size: 0.65rem; vertical-align: middle; padding: 1px 5px;">v0.1</span></div>
           <div class="brand-subtitle" style="font-size: 0.7rem;">{{ currentHeaderSubtitle }}</div>
         </div>
       </router-link>
@@ -95,7 +95,7 @@
     <footer v-if="showNavbar" class="app-footer no-print">
       <div class="footer-inner">
         <img :src="logoImg" alt="Pura Group" class="footer-logo" />
-        <span>&copy;2026 PT Pura Barutama Unit Offset. All Rights Reserved.</span>
+        <span>&copy;2026 PT Pura Barutama Unit Offset. All Rights Reserved. &bull; <b>v0.1</b></span>
       </div>
     </footer>
 
